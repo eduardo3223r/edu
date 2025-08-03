@@ -1,0 +1,1656 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ciência Interativa Neuro-Acessível  (Supabase Edition)</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/face_mesh.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        :root {
+            --font-primary: 'Poppins', sans-serif;
+            --cor-fundo: #F8F9FA;
+            --cor-card: rgba(255, 255, 255, 0.6);
+            --cor-texto-primario: #212529;
+            --cor-texto-secundario: #6C757D;
+            --cor-borda-vidro: rgba(200, 200, 220, 0.4);
+            --cor-sombra: rgba(0, 0, 0, 0.1);
+            --cor-fisica: #007BFF;
+            --cor-quimica: #7E57C2;
+            --cor-biologia: #28A745;
+            --cor-matematica: #FFC107;
+            --cor-geral: #007BFF;
+            --cor-correto: #28A745;
+            --cor-errado: #DC3545;
+            --cor-neutro: #FFC107;
+            --glass-blur: 15px;
+            --transition-speed: 0.4s;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-primary);
+            background-color: var(--cor-fundo);
+            color: var(--cor-texto-primario);
+            overflow-x: hidden;
+            text-align: center;
+            transition: background-color var(--transition-speed) ease;
+        }
+        #dynamic-background { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; }
+        .screen {
+            position: absolute; top: 0; left: 0;
+            width: 100%; min-height: 100vh; height: auto;
+            padding: 2rem; display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            padding-top: 6rem;
+            opacity: 0; visibility: hidden;
+            transform: translateY(20px);
+            transition: opacity var(--transition-speed) ease-out, transform var(--transition-speed) ease-out, visibility 0s var(--transition-speed);
+            overflow-y: auto;
+        }
+        .screen#mainMenu, .screen#gameLobbyScreen { justify-content: center; padding-top: 2rem; }
+        .screen.active {
+            opacity: 1; transform: translateY(0); visibility: visible;
+            transition: opacity var(--transition-speed) ease-out, transform var(--transition-speed) ease-out;
+        }
+        .glass-card {
+            background: var(--cor-card); border: 1px solid var(--cor-borda-vidro);
+            border-radius: 20px; backdrop-filter: blur(var(--glass-blur));
+            -webkit-backdrop-filter: blur(var(--glass-blur));
+            box-shadow: 0 8px 32px 0 var(--cor-sombra);
+            padding: clamp(1.5rem, 4vw, 2.5rem);
+            transition: all var(--transition-speed) ease;
+            width: 100%;
+        }
+        .page-header {
+            position: absolute; top: 2rem; left: 2rem;
+            width: auto;
+        }
+        .page-title {
+            font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; margin-bottom: 0.5rem;
+            background: linear-gradient(45deg, var(--cor-fisica), var(--cor-quimica));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .page-subtitle {
+            font-size: clamp(1rem, 2vw, 1.2rem); color: var(--cor-texto-secundario);
+            font-weight: 400; margin-bottom: 2.5rem; max-width: 800px;
+        }
+        .btn {
+            padding: 0.8rem 1.8rem; font-size: 1rem; font-weight: 600;
+            border-radius: 50px; cursor: pointer; transition: all 0.3s ease;
+            border: 2px solid transparent; display: inline-flex; align-items: center;
+            gap: 0.5rem; justify-content: center; text-decoration: none;
+        }
+        .btn-primary { background-color: var(--cor-geral); color: white; }
+        .btn:hover, .btn.focused { transform: translateY(-5px) scale(1.05); box-shadow: 0 10px 20px rgba(0, 123, 255, 0.2); }
+        .btn-secondary { background-color: transparent; color: var(--cor-texto-secundario); border: 2px solid var(--cor-borda-vidro); }
+        .btn-secondary:hover, .btn-secondary.focused { border-color: var(--cor-geral); color: var(--cor-geral); box-shadow: none; background-color: rgba(0, 123, 255, 0.1); }
+        .btn-danger { background-color: var(--cor-errado); color: white; border-color: transparent; }
+        .btn-danger:hover { background-color: #a71d2a; box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3); }
+        .btn-success { background-color: var(--cor-correto); color: white; }
+        .btn-success:hover { box-shadow: 0 10px 20px rgba(40, 167, 69, 0.2); }
+        .btn:disabled { background-color: #ccc; cursor: not-allowed; transform: none; box-shadow: none; }
+        .input-field, .select-field {
+            width: 100%; padding: 1rem; font-size: 1rem;
+            background-color: rgba(248, 249, 250, 0.9);
+            border: 1px solid var(--cor-borda-vidro); border-radius: 12px;
+            color: var(--cor-texto-primario); margin-bottom: 1rem;
+            font-family: var(--font-primary);
+        }
+        .form-group { width: 100%; text-align: left; margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        #mainMenu .content-grid {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem; max-width: 1200px;
+        }
+        .subject-card { cursor: pointer; text-align: center; color: var(--cor-texto-primario); transform-style: preserve-3d; }
+        .subject-card:hover { transform: translateY(-15px) rotateX(5deg) rotateY(-5deg); box-shadow: 0 20px 40px var(--cor-sombra); }
+        .subject-card .icon { font-size: 4rem; margin-bottom: 1rem; transition: color 0.3s ease; }
+        .subject-card h2 { font-size: 2rem; font-weight: 700; }
+        .subject-card.fisica .icon { color: var(--cor-fisica); }
+        .subject-card.quimica .icon { color: var(--cor-quimica); }
+        .subject-card.biologia .icon { color: var(--cor-biologia); }
+        .subject-card.matematica .icon { color: var(--cor-matematica); }
+        .actions-bar { margin-top: 2rem; display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+        .actions-bar .btn { min-width: 250px; }
+        #quizScreen { max-width: 1200px; }
+        .quiz-header {
+            width: 100%; display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1.5rem; padding: 1rem; position: sticky; top: 1rem; z-index: 10;
+        }
+        .quiz-stat { font-size: 1.3rem; font-weight: 600; }
+        .quiz-question-area { padding: 2rem; margin-bottom: 1.5rem; min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        #questionMedia { margin-bottom: 1rem; max-width: 100%; max-height: 200px; border-radius: 10px; object-fit: cover; }
+        #questionText { font-size: clamp(1.5rem, 3vw, 2.2rem); font-weight: 700; }
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; width: 100%; }
+        .option-button { padding: 1.5rem; font-size: 1.2rem; font-weight: 600; border-radius: 12px; cursor: pointer; color: white; display: flex; align-items: center; gap: 1rem; min-height: 80px; }
+        .option-button:disabled { opacity: 0.6; cursor: not-allowed; }
+        .option-button .shape { font-size: 1.5rem; }
+        .option-button.triangulo { background-color: #c0392b; }
+        .option-button.losango { background-color: #2980b9; }
+        .option-button.circulo { background-color: #f39c12; }
+        .option-button.quadrado { background-color: #27ae60; }
+        .option-button.correct { animation: pulseCorrect 0.8s; background-color: var(--cor-correto) !important; }
+        .option-button.wrong { animation: shake 0.5s; background-color: var(--cor-errado) !important; opacity: 0.5; }
+        .option-button.reveal-correct { animation: pulseCorrect 0.8s; border: 4px solid white; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 10%, 50%, 90% { transform: translateX(-8px); } 30%, 70% { transform: translateX(8px); } }
+        @keyframes pulseCorrect { 0% { transform: scale(1); } 50% { transform: scale(1.05); } 100% { transform: scale(1); } }
+        #accessibility-toolbar { position: fixed; top: 50%; right: 0; transform: translateY(-50%); z-index: 2000; display: flex; flex-direction: column; gap: 0.5rem; padding: 0.5rem; background: var(--cor-card); backdrop-filter: blur(var(--glass-blur)); border-radius: 15px 0 0 15px; box-shadow: -5px 0 15px rgba(0,0,0,0.1); }
+        .access-btn { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--cor-borda-vidro); color: var(--cor-texto-secundario); background: transparent; font-size: 1.5rem; cursor: pointer; transition: all 0.3s ease; }
+        .access-btn:hover, .access-btn.focused { color: var(--cor-texto-primario); background-color: rgba(0,0,0,0.05); transform: scale(1.1); }
+        .access-btn.active { background-color: var(--cor-correto); color: white; border-color: var(--cor-correto); animation: pulseActive 1.5s infinite; }
+        @keyframes pulseActive { 0% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); } 100% { box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); } }
+        #eye-cursor { position: fixed; width: 35px; height: 35px; border: 3px solid white; border-radius: 50%; background-color: rgba(255, 193, 7, 0.5); z-index: 10000; pointer-events: none; display: none; transition: transform 0.1s linear, background-color 0.2s, box-shadow 0.2s; box-shadow: 0 0 15px rgba(255, 255, 255, 0.7); }
+        #eye-cursor.blinking { transform: scale(1.6) !important; background-color: var(--cor-neutro); }
+        #eye-cursor.dragging { transform: scale(1.3) !important; background-color: var(--cor-correto); box-shadow: 0 0 25px var(--cor-correto); }
+        #video-preview { display: none; position: fixed; bottom: 20px; left: 20px; width: 160px; height: 120px; border-radius: 15px; border: 3px solid var(--cor-geral); z-index: 999; box-shadow: 0 5px 20px var(--cor-sombra); transform: scaleX(-1); background-color: #000; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); backdrop-filter: blur(5px); display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-content { width: 90%; max-width: 500px; text-align: center; transform: scale(0.95); transition: transform 0.3s ease; }
+        .modal-overlay.active .modal-content { transform: scale(1); }
+        .modal-content h3 { margin-bottom: 1.5rem; font-size: 1.8rem; }
+        .modal-buttons { display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;}
+        .list-item { background: rgba(255,255,255,0.5); border: 1px solid var(--cor-borda-vidro); padding: 1rem 1.5rem; border-radius: 12px; margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center; text-align: left; }
+        .list-item-title { font-weight: 600; font-size: 1.1rem; }
+        .list-item-actions button { background: none; border: none; color: var(--cor-texto-secundario); cursor: pointer; font-size: 1.1rem; margin-left: 0.5rem; padding: 0.5rem; transition: color 0.3s; }
+        .list-item-actions button:hover { color: var(--cor-texto-primario); }
+        .question-editor { background: rgba(0,0,0,0.05); padding: 1.5rem; border-radius: 10px; margin-bottom: 1.5rem; border: 1px dashed var(--cor-borda-vidro); cursor: grab; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .question-editor.is-dragging { opacity: 0.8; transform: scale(1.02); box-shadow: 0 10px 30px var(--cor-sombra); cursor: grabbing; z-index: 100; position: relative; }
+        .option-editor { display: flex; align-items: center; gap: 1rem; margin-bottom: 0.5rem; }
+        .option-editor input[type="radio"] { width: 20px; height: 20px; flex-shrink: 0; }
+        .media-upload-area { display: flex; align-items: center; gap: 1rem; }
+        .media-upload-area .media-preview { width: 80px; height: 60px; border-radius: 8px; background: #eee; object-fit: cover; }
+        .media-upload-area .input-field { margin-bottom: 0; }
+        #gameLobbyScreen .lobby-code { font-size: clamp(2rem, 8vw, 4rem); font-weight: 800; letter-spacing: 5px; background: var(--cor-geral); color: white; padding: 1rem 2rem; border-radius: 15px; margin: 1rem 0; }
+        #playerList { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1.5rem; justify-content: center; text-align: center; margin-top: 2rem; width:100%; max-width:1200px; }
+        .player-chip { background: white; color: var(--cor-texto-primario); font-weight: 600; padding: 0.8rem 1.2rem; border-radius: 15px; box-shadow: 0 4px 10px var(--cor-sombra); animation: popIn 0.3s ease-out; display: flex; flex-direction: column; align-items: center; gap: 0.5rem; }
+        .player-avatar { font-size: 2.5rem; line-height: 1; width: 50px; height: 50px; display:flex; align-items:center; justify-content:center; }
+        .player-avatar img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        #leaderboardOverlay { position: fixed; top: 0; left: 0; z-index: 100; }
+        #leaderboardOverlay .modal-content { max-width: 600px; }
+        .leaderboard-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8rem; border-bottom: 1px solid var(--cor-borda-vidro); font-size: 1.2rem; }
+        .leaderboard-item:last-child { border-bottom: none; }
+        .leaderboard-item .rank { font-weight: 800; width: 30px; }
+        .leaderboard-item .name { flex-grow: 1; text-align: left; margin-left: 1rem; }
+        .leaderboard-item .score { font-weight: 600; }
+        #marketplaceScreen .filters { margin-bottom: 2rem; display: flex; gap: 1rem; justify-content: center; }
+        #marketplace-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; max-width: 1400px; }
+        .marketplace-card { text-align: left; }
+        .marketplace-card h3 { font-size: 1.4rem; margin-bottom: 0.5rem; }
+        .marketplace-card p { font-size: 0.9rem; color: var(--cor-texto-secundario); margin-bottom: 1rem; }
+        .marketplace-card .author { font-weight: 600; }
+        .marketplace-card .stats { display: flex; gap: 1.5rem; margin-top: 1.5rem; border-top: 1px solid var(--cor-borda-vidro); padding-top: 1.5rem; }
+        .marketplace-card .stats span { font-weight: 600; }
+        .performance-feedback { position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: var(--cor-card); padding: 1rem; border-radius: 10px; box-shadow: 0 5px 15px var(--cor-sombra); transform: translateY(100px); opacity: 0; transition: all 0.3s ease; }
+        .performance-feedback.show { transform: translateY(0); opacity: 1; }
+        .performance-feedback.perfect { border-left: 5px solid var(--cor-correto); }
+        .performance-feedback.fast { border-left: 5px solid var(--cor-fisica); }
+        .performance-feedback.correct { border-left: 5px solid var(--cor-neutro); }
+        @keyframes countUp { from { transform: scale(1.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .counting-score { animation: countUp 0.5s ease-out; display: inline-block; }
+        .quiz-cover-image { width: 100%; height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 1rem; border: 1px solid var(--cor-borda-vidro); }
+        .blink-feedback { position: fixed; top: 20px; right: 20px; z-index: 1000; background: rgba(0,0,0,0.7); color: white; padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.9rem; display: none; }
+        .blink-feedback.show { display: block; animation: fadeInOut 2s ease; }
+        @keyframes fadeInOut { 0% { opacity: 0; transform: translateY(-10px); } 20% { opacity: 1; transform: translateY(0); } 80% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-10px); } }
+        #avatar-selection { margin-top: 1.5rem; }
+        .emoji-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 0.5rem; max-height: 150px; overflow-y: auto; background: rgba(0,0,0,0.05); padding: 0.5rem; border-radius: 10px; }
+        .emoji-btn { font-size: 1.8rem; cursor: pointer; background: none; border: 2px solid transparent; border-radius: 8px; transition: all 0.2s; }
+        .emoji-btn:hover { background-color: rgba(0,0,0,0.1); }
+        .emoji-btn.selected { border-color: var(--cor-geral); background-color: rgba(0,123,255,0.2); }
+        #avatar-upload-area { margin-top: 1rem; text-align:center; }
+        #avatar-upload-area label { cursor: pointer; display: inline-block; padding: 0.5rem 1rem; background-color: var(--cor-texto-secundario); color: white; border-radius: 8px; font-weight: 500; }
+        #avatar-upload-area input[type="file"] { display: none; }
+        #avatar-preview { width: 60px; height: 60px; border-radius: 50%; object-fit: cover; border: 3px solid var(--cor-geral); margin: 0 auto 1rem; display:none; }
+        #progress-bar-container { width: 100%; height: 8px; background-color: rgba(0,0,0,0.1); border-radius: 4px; margin-bottom: 1rem; }
+        #progress-bar { height: 100%; width: 0%; background-color: var(--cor-geral); border-radius: 4px; transition: width 0.5s ease; }
+        #lives-container { display: flex; gap: 0.5rem; align-items: center; }
+        #streak-container { display: flex; gap: 0.5rem; align-items: center; color: var(--cor-neutro); font-weight: 600; }
+        #fullscreen-feedback { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 5000; display: flex; justify-content: center; align-items: center; font-size: 5rem; font-weight: 800; color: white; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        #fullscreen-feedback.correct { background-color: rgba(40, 167, 69, 0.8); }
+        #fullscreen-feedback.incorrect { background-color: rgba(220, 53, 69, 0.8); }
+        #fullscreen-feedback.show { opacity: 1; }
+        @media (max-width: 768px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .actions-bar { flex-direction: column; align-items: center; }
+            .page-title { font-size: 2rem; }
+            .page-header { top: 1rem; left: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="dynamic-background"></canvas>
+    <video id="video-preview" playsinline></video>
+    <div id="eye-cursor"></div>
+    <div id="performance-feedback" class="performance-feedback"></div>
+    <div id="blink-feedback" class="blink-feedback">Piscada detectada!</div>
+    <div id="fullscreen-feedback"></div>
+    
+    <aside id="accessibility-toolbar">
+        <button id="access-cam-btn" class="access-btn" title="Ativar Neuro Control (Câmera)"><i class="fas fa-video"></i></button>
+        <button id="access-mic-btn" class="access-btn" title="Ativar Comandos de Voz"><i class="fas fa-microphone"></i></button>
+        <button id="access-settings-btn" class="access-btn" title="Ajustar Sensibilidade"><i class="fas fa-cog"></i></button>
+    </aside>
+
+    <main id="mainMenu" class="screen active">
+        <h1 class="page-title">Ciência Interativa</h1>
+        <p class="page-subtitle">Sua jornada de conhecimento neuro-acessível começa agora. Escolha uma matéria para começar.</p>
+        
+        <div class="content-grid">
+            <div class="glass-card subject-card fisica" data-action="start-default-quiz" data-subject="fisica">
+                <div class="icon"><i class="fas fa-atom"></i></div>
+                <h2>Física</h2><p>Descubra as leis que movem o universo.</p>
+            </div>
+            <div class="glass-card subject-card quimica" data-action="start-default-quiz" data-subject="quimica">
+                <div class="icon"><i class="fas fa-flask-vial"></i></div>
+                <h2>Química</h2><p>Explore a matéria e suas transformações.</p>
+            </div>
+            <div class="glass-card subject-card biologia" data-action="start-default-quiz" data-subject="biologia">
+                <div class="icon"><i class="fas fa-dna"></i></div>
+                <h2>Biologia</h2><p>Entenda as maravilhas da vida.</p>
+            </div>
+            <div class="glass-card subject-card matematica" data-action="start-default-quiz" data-subject="matematica">
+                <div class="icon"><i class="fas fa-calculator"></i></div>
+                <h2>Matemática</h2><p>Desvende a linguagem dos números.</p>
+            </div>
+        </div>
+
+        <div class="actions-bar glass-card">
+            <button class="btn btn-primary" data-action="show-modal" data-target="joinGameModal"><i class="fas fa-gamepad"></i> Entrar em uma Sala</button>
+            <button class="btn btn-secondary" data-action="show-modal" data-target="passwordModal"><i class="fas fa-lock"></i> Modo Professor</button>
+            <button class="btn btn-secondary" data-action="navigate" data-target="marketplaceScreen"><i class="fas fa-store"></i> Marketplace de Quizzes</button>
+        </div>
+    </main>
+    
+    <section id="quizScreen" class="screen">
+        <div class="page-header"><button class="btn btn-secondary" data-action="navigate" data-target="mainMenu"><i class="fas fa-arrow-left"></i> Sair do Quiz</button></div>
+        <div class="quiz-content-wrapper" style="width: 100%; max-width: 1200px;">
+            <header class="quiz-header glass-card">
+                <div class="quiz-stat">Questão: <span id="currentQuestion">1</span>/<span id="totalQuestions">0</span></div>
+                <div id="player-score-container" class="quiz-stat">Pontuação: <span id="score">0</span></div>
+                <div id="lives-container"></div>
+                <div id="streak-container"></div>
+            </header>
+            <div id="progress-bar-container"><div id="progress-bar"></div></div>
+            <div class="quiz-question-area glass-card">
+                 <img id="questionMedia" src="" alt="Mídia da questão" style="display: none;">
+                 <h2 id="questionText">Carregando pergunta...</h2>
+            </div>
+            <div id="optionsContainer" class="options-grid"></div>
+        </div>
+    </section>
+
+    <section id="professorPanel" class="screen">
+        <div class="page-header"><button class="btn btn-secondary" data-action="navigate" data-target="mainMenu"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+        <h1 class="page-title" style="text-align: center;">Área do Professor</h1>
+        <p class="page-subtitle">Gerencie seus quizzes, crie novas avaliações e acompanhe o desempenho dos alunos.</p>
+        <div class="glass-card" style="max-width: 900px; text-align: left;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+                <h3 style="margin: 0;">Meus Quizzes</h3>
+                <button class="btn btn-primary" data-action="go-to-editor"><i class="fas fa-plus"></i> Criar Novo Quiz</button>
+            </div>
+            <div id="customQuizzesList"><p>Carregando seus quizzes...</p></div>
+        </div>
+    </section>
+
+    <section id="createQuizScreen" class="screen">
+        <div class="page-header"><button class="btn btn-secondary" data-action="navigate" data-target="professorPanel"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+        <h1 id="createQuizTitle" class="page-title" style="text-align: center;">Criar Quiz</h1>
+        <p class="page-subtitle">Preencha os dados abaixo para criar ou editar sua avaliação.</p>
+        <div class="glass-card" style="max-width: 900px; text-align: left;">
+            <form id="quizEditorForm">
+                <input type="hidden" id="editingQuizId">
+                <div class="form-group">
+                    <label for="quizName">Nome do Quiz</label>
+                    <input type="text" id="quizName" class="input-field" placeholder="Ex: Avaliação de Biologia - 1º Trimestre" required>
+                </div>
+                <div class="form-group">
+                    <label for="quizSubject">Matéria</label>
+                    <select id="quizSubject" class="select-field" required>
+                        <option value="fisica">Física</option><option value="quimica">Química</option>
+                        <option value="biologia">Biologia</option><option value="matematica">Matemática</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="quizCoverImage">Imagem de Capa (Opcional)</label>
+                    <div class="media-upload-area">
+                        <img id="quizCoverPreview" src="https://via.placeholder.com/320x180.png?text=Imagem+de+Capa" class="quiz-cover-image">
+                        <input type="file" id="quizCoverImage" class="input-field media-file" accept="image/*">
+                        <input type="hidden" id="quizCoverUrl">
+                    </div>
+                </div>
+                <h3 style="margin: 2rem 0 1rem;">Perguntas</h3>
+                <hr style="border-color: var(--cor-borda-vidro); margin-bottom: 2rem;">
+                <div id="questionsEditorContainer"></div>
+                <button type="button" id="addQuestionBtn" class="btn btn-secondary" style="width: 100%; margin: 1rem 0;"><i class="fas fa-plus"></i> Adicionar Pergunta</button>
+                <button type="submit" id="saveQuizBtn" class="btn btn-primary" style="width: 100%; padding: 1rem; font-size: 1.2rem;"><i class="fas fa-save"></i> Salvar Quiz na Nuvem</button>
+            </form>
+        </div>
+    </section>
+
+    <section id="resultsScreen" class="screen">
+         <div class="page-header"><button class="btn btn-secondary" data-action="navigate" data-target="professorPanel"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+         <h1 id="resultsQuizTitle" class="page-title" style="text-align: center;">Resultados do Quiz</h1>
+         <div class="glass-card" style="max-width: 900px; text-align: left;">
+            <h3 style="margin-bottom: 1.5rem;">Desempenho dos Alunos</h3>
+            <div id="resultsList"><p>Carregando resultados...</p></div>
+         </div>
+    </section>
+
+    <section id="gameLobbyScreen" class="screen">
+        <div class="page-header"><button class="btn btn-danger" id="leaveLobbyBtn"><i class="fas fa-times"></i> Cancelar Sala</button></div>
+        <h1 class="page-title" id="lobbyQuizTitle">Aguardando Jogadores</h1>
+        <p class="page-subtitle">Peça para os alunos inserirem este código para entrar na sala:</p>
+        <div id="lobbyRoomCode" class="lobby-code">------</div>
+        <div id="playerList" class="glass-card"></div>
+        <button id="startGameBtn" class="btn btn-primary" style="padding: 1rem 3rem; font-size: 1.5rem; margin-top: 2rem;"><i class="fas fa-play"></i> Iniciar Jogo</button>
+    </section>
+
+    <section id="marketplaceScreen" class="screen">
+        <div class="page-header"><button class="btn btn-secondary" data-action="navigate" data-target="mainMenu"><i class="fas fa-arrow-left"></i> Voltar</button></div>
+        <h1 class="page-title" style="text-align: center;">Marketplace de Quizzes</h1>
+        <p class="page-subtitle">Explore, descubra e clone quizzes incríveis criados por outros educadores da comunidade.</p>
+        <div class="filters">
+            <input type="search" id="marketplaceSearch" class="input-field" placeholder="Buscar por título ou matéria..." style="max-width: 400px;">
+        </div>
+        <div id="marketplace-list">
+            <p>Carregando quizzes da comunidade...</p>
+        </div>
+    </section>
+    
+    <div id="passwordModal" class="modal-overlay">
+        <div class="modal-content glass-card">
+            <h3>Acesso Restrito</h3>
+            <div class="form-group"><label for="passwordInput">Senha do Professor</label><input type="password" id="passwordInput" class="input-field" placeholder="A senha é 123456"><p id="passwordError" style="color: var(--cor-errado); display: none; margin-top: 0.5rem;">Senha incorreta.</p></div>
+            <div class="modal-buttons"><button data-action="close-modal" class="btn btn-secondary">Cancelar</button><button id="submitPasswordBtn" class="btn btn-primary">Entrar</button></div>
+        </div>
+    </div>
+    <div id="joinGameModal" class="modal-overlay">
+        <div class="modal-content glass-card">
+            <h3>Entrar em uma Sala de Jogo</h3>
+            <div class="form-group"><label for="studentNameInput">Seu Nome</label><input type="text" id="studentNameInput" class="input-field" placeholder="Ex: Ana Silva" required></div>
+            <div class="form-group"><label for="roomCodeInput">Código da Sala</label><input type="text" id="roomCodeInput" class="input-field" placeholder="Ex: 123456" required><p id="roomCodeError" style="color: var(--cor-errado); display: none; margin-top: 0.5rem;">Código inválido ou sala não encontrada.</p></div>
+            <div id="avatar-selection">
+                <p style="margin-bottom: 0.5rem;">Escolha seu avatar:</p>
+                <div class="emoji-grid">
+                    <button class="emoji-btn" data-emoji="😀">😀</button>
+                    <button class="emoji-btn" data-emoji="😎">😎</button>
+                    <button class="emoji-btn" data-emoji="🤓">🤓</button>
+                    <button class="emoji-btn" data-emoji="🧐">🧐</button>
+                    <button class="emoji-btn" data-emoji="👩‍🔬">👩‍🔬</button>
+                    <button class="emoji-btn" data-emoji="👨‍🔬">👨‍🔬</button>
+                    <button class="emoji-btn" data-emoji="👽">👽</button>
+                    <button class="emoji-btn" data-emoji="🤖">🤖</button>
+                    <button class="emoji-btn" data-emoji="🐶">🐶</button>
+                    <button class="emoji-btn" data-emoji="🐱">🐱</button>
+                    <button class="emoji-btn" data-emoji="🦊">🦊</button>
+                    <button class="emoji-btn" data-emoji="🐼">🐼</button>
+                    <button class="emoji-btn" data-emoji="🦄">🦄</button>
+                    <button class="emoji-btn" data-emoji="🐉">🐉</button>
+                    <button class="emoji-btn" data-emoji="🦉">🦉</button>
+                    <button class="emoji-btn" data-emoji="🦋">🦋</button>
+                    <button class="emoji-btn" data-emoji="🌻">🌻</button>
+                    <button class="emoji-btn" data-emoji="🌍">🌍</button>
+                    <button class="emoji-btn" data-emoji="🚀">🚀</button>
+                    <button class="emoji-btn" data-emoji="⚡">⚡</button>
+                    <button class="emoji-btn" data-emoji="🔭">🔭</button>
+                    <button class="emoji-btn" data-emoji="🔬">🔬</button>
+                    <button class="emoji-btn" data-emoji="🧪">🧪</button>
+                    <button class="emoji-btn" data-emoji="🧮">🧮</button>
+                    <button class="emoji-btn" data-emoji="🎲">🎲</button>
+                    <button class="emoji-btn" data-emoji="🎯">🎯</button>
+                    <button class="emoji-btn" data-emoji="🏆">🏆</button>
+                    <button class="emoji-btn" data-emoji="🌟">🌟</button>
+                </div>
+            </div>
+            <div class="modal-buttons"><button data-action="close-modal" class="btn btn-secondary">Cancelar</button><button id="submitJoinBtn" class="btn btn-primary">Participar</button></div>
+        </div>
+    </div>
+    <div id="accessibilitySettingsModal" class="modal-overlay">
+         <div class="modal-content glass-card" style="max-width: 600px;">
+             <h3>Ajustes de Acessibilidade</h3>
+             <div id="sensitivity-sliders-container" style="text-align: left;"></div>
+             <div class="modal-buttons"><button data-action="close-modal" class="btn btn-primary">Fechar</button></div>
+         </div>
+    </div>
+    <div id="leaderboardOverlay" class="modal-overlay">
+        <div class="modal-content glass-card">
+            <h3 id="leaderboardTitle">Placar</h3>
+            <div id="leaderboardContent"></div>
+            <div class="modal-buttons">
+                <button id="nextQuestionBtn" class="btn btn-primary">Próxima Pergunta</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // =======================================================================
+        // 1. SETUP INICIAL, ESTADO E VARIÁVEIS GLOBAIS
+        // =======================================================================
+        let currentScreenId = 'mainMenu';
+        let currentSubject = '';
+        let score = 0;
+        let currentQuestionIndex = 0;
+        let currentQuiz = [];
+        let questionEditorCounter = 0;
+        let activeListeners = { roomChannel: null }; // Alterado para Supabase
+        let recognition;
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let isMicActive = false;
+        let lives = 3;
+        let streak = 0;
+        const STREAK_BONUS = 100;
+        const BASE_POINTS = 1000;
+        let SENSITIVITIES = { blink: 0.25, mouthOpen: 0.08, smile: 4.0, micConfidence: 0.7 };
+        let gameState = {
+            isHost: false,
+            roomCode: null,
+            playerId: `player_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`,
+            playerName: null,
+            playerAvatar: "😀",
+            currentQuizData: null,
+            questionStartTime: 0
+        };
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        // CONTEÚDO PADRÃO (NÃO PRECISA DE BANCO DE DADOS)
+        const defaultContent = {
+            fisica: { quiz: [
+                {q: "Qual lei afirma que um corpo em repouso tende a ficar em repouso?", o: ["Inércia", "Ação e Reação", "Dinâmica", "Gravitação"], a: "Inércia"},
+                {q: "O que a segunda lei de Newton (F=ma) descreve?", o: ["A relação entre força, massa e aceleração", "A conservação de energia", "A atração gravitacional", "O movimento dos planetas"], a: "A relação entre força, massa e aceleração"},
+                {q: "Qual é a unidade de medida da Força no Sistema Internacional?", o: ["Newton (N)", "Joule (J)", "Watt (W)", "Pascal (Pa)"], a: "Newton (N)"},
+                {q: "A energia associada ao movimento de um corpo é chamada de:", o: ["Energia Cinética", "Energia Potencial", "Energia Térmica", "Energia Elástica"], a: "Energia Cinética"},
+                {q: "Qual o princípio que explica o funcionamento de um foguete?", o: ["Ação e Reação (3ª Lei de Newton)", "Inércia (1ª Lei de Newton)", "Lei da Gravitação Universal", "Princípio de Arquimedes"], a: "Ação e Reação (3ª Lei de Newton)"},
+                {q: "A luz se comporta como onda e também como...", o: ["Partícula", "Gás", "Líquido", "Plasma"], a: "Partícula"},
+                {q: "O que mede a grandeza física chamada 'Potência'?", o: ["A rapidez com que o trabalho é realizado", "A quantidade de calor de um corpo", "A resistência ao movimento", "A quantidade de matéria"], a: "A rapidez com que o trabalho é realizado"},
+                {q: "Qual o nome do fenômeno onde a luz se desvia ao passar de um meio para outro?", o: ["Refração", "Reflexão", "Difração", "Polarização"], a: "Refração"},
+                {q: "Em um circuito elétrico, o que se opõe à passagem da corrente?", o: ["Resistência Elétrica", "Tensão Elétrica", "Potência Elétrica", "Carga Elétrica"], a: "Resistência Elétrica"},
+                {q: "Quem formulou a Teoria da Relatividade?", o: ["Albert Einstein", "Isaac Newton", "Galileu Galilei", "Nikola Tesla"], a: "Albert Einstein"},
+                {q: "Qual tipo de onda não precisa de um meio para se propagar?", o: ["Onda Eletromagnética", "Onda Sonora", "Onda Mecânica", "Onda do mar"], a: "Onda Eletromagnética"},
+                {q: "O que é o zero absoluto?", o: ["A menor temperatura teórica possível", "O ponto de fusão da água", "A temperatura do Sol", "O ponto de ebulição do nitrogênio"], a: "A menor temperatura teórica possível"},
+                {q: "Qual a força que mantém os planetas em órbita ao redor do Sol?", o: ["Força Gravitacional", "Força Eletromagnética", "Força Nuclear Forte", "Força de Tensão"], a: "Força Gravitacional"},
+                {q: "A mudança do estado sólido diretamente para o gasoso é chamada de:", o: ["Sublimação", "Fusão", "Vaporização", "Condensação"], a: "Sublimação"},
+                {q: "Qual instrumento é usado para medir a pressão atmosférica?", o: ["Barômetro", "Termômetro", "Anemômetro", "Higrômetro"], a: "Barômetro"}
+            ]},
+            quimica: { quiz: [
+                {q: "Qual partícula atômica tem carga negativa?", o: ["Elétron", "Próton", "Nêutron", "Pósitron"], a: "Elétron"},
+                {q: "Qual é o símbolo químico da água?", o: ["H₂O", "CO₂", "O₂", "NaCl"], a: "H₂O"},
+                {q: "Na tabela periódica, os elementos estão organizados em ordem crescente de...", o: ["Número Atômico", "Massa Atômica", "Raio Atômico", "Eletronegatividade"], a: "Número Atômico"},
+                {q: "O processo de transformação de um líquido em gás é chamado de:", o: ["Vaporização", "Condensação", "Solidificação", "Sublimação"], a: "Vaporização"},
+                {q: "Qual gás é essencial para a respiração humana?", o: ["Oxigênio (O₂)", "Dióxido de Carbono (CO₂)", "Nitrogênio (N₂)", "Hidrogênio (H₂)"], a: "Oxigênio (O₂)"},
+                {q: "Uma substância com pH 7 é considerada...", o: ["Neutra", "Ácida", "Básica (Alcalina)", "Corrosiva"], a: "Neutra"},
+                {q: "Qual é o metal mais abundante na crosta terrestre?", o: ["Alumínio", "Ferro", "Cobre", "Ouro"], a: "Alumínio"},
+                {q: "A ligação química que envolve o compartilhamento de elétrons é a...", o: ["Ligação Covalente", "Ligação Iônica", "Ligação Metálica", "Ponte de Hidrogênio"], a: "Ligação Covalente"},
+                {q: "Qual o nome dado a uma reação química que libera calor?", o: ["Exotérmica", "Endotérmica", "De síntesis", "De decomposição"], a: "Exotérmica"},
+                {q: "O que é uma molécula?", o: ["Um grupo de dois ou mais átomos ligados", "A menor parte de um elemento", "Uma partícula subatômica", "Um tipo de íon"], a: "Um grupo de dois ou mais átomos ligados"},
+                {q: "Qual elemento químico é o principal componente dos diamantes?", o: ["Carbono", "Silício", "Oxigênio", "Zircônio"], a: "Carbono"},
+                {q: "O sal de cozinha comum é quimicamente conhecido como:", o: ["Cloreto de Sódio", "Bicarbonato de Sódio", "Hipoclorito de Sódio", "Hidróxido de Sódio"], a: "Cloreto de Sódio"},
+                {q: "Quem é considerado o 'pai' da tabela periódica moderna?", o: ["Dmitri Mendeleiev", "Antoine Lavoisier", "John Dalton", "Marie Curie"], a: "Dmitri Mendeleiev"},
+                {q: "O que são isótopos?", o: ["Átomos do mesmo elemento com número diferente de nêutrons", "Átomos com o mesmo número de massa", "Átomos com carga elétrica", "Moléculas com a mesma fórmula"], a: "Átomos do mesmo elemento com número diferente de nêutrons"},
+                {q: "Qual gás é responsável pelo efeito estufa?", o: ["Dióxido de Carbono (CO₂)", "Oxigênio (O₂)", "Hélio (He)", "Argônio (Ar)"], a: "Dióxido de Carbono (CO₂)"}
+            ]},
+            biologia: { quiz: [
+                {q: "Qual organela é a 'central de energia' da célula?", o: ["Mitocôndria", "Núcleo", "Ribossomo", "Lisossomo"], a: "Mitocôndria", mediaUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Mitochondrion_-_TEM.jpg/320px-Mitochondrion_-_TEM.jpg", mediaType: "image"},
+                {q: "Qual é o processo pelo qual as plantas produzem seu próprio alimento?", o: ["Fotossíntese", "Respiração", "Transpiração", "Decomposição"], a: "Fotossíntese"},
+                {q: "O que é o DNA?", o: ["A molécula que carrega a informação genética", "Uma proteína celular", "Um tipo de açúcar", "A membrana da célula"], a: "A molécula que carrega a informação genética"},
+                {q: "Qual é o maior órgão do corpo humano?", o: ["Pele", "Fígado", "Cérebro", "Intestino"], a: "Pele"},
+                {q: "Qual sistema do corpo é responsável por combater doenças?", o: ["Sistema Imunológico", "Sistema Nervoso", "Sistema Digestório", "Sistema Respiratório"], a: "Sistema Imunológico"},
+                {q: "A evolução por seleção natural foi proposta por...", o: ["Charles Darwin", "Gregor Mendel", "Louis Pasteur", "James Watson"], a: "Charles Darwin"},
+                {q: "O sangue é bombeado para todo o corpo pelo:", o: ["Coração", "Pulmão", "Rim", "Cérebro"], a: "Coração"},
+                {q: "Que tipo de célula não possui núcleo definido?", o: ["Procarionte", "Eucarionte", "Neurônio", "Hemácia"], a: "Procarionte"},
+                {q: "Como são chamados os seres vivos que produzem seu próprio alimento?", o: ["Autótrofos", "Heterótrofos", "Decompositores", "Consumidores"], a: "Autótrofos"},
+                {q: "Qual é a função dos ribossomos na célula?", o: ["Síntese de proteínas", "Armazenamento de energia", "Digestão celular", "Transporte de substâncias"], a: "Síntese de proteínas"},
+                {q: "O conjunto de todos os ecossistemas da Terra é chamado de:", o: ["Biosfera", "Atmosfera", "Litosfera", "Hidrosfera"], a: "Biosfera"},
+                {q: "Quem é conhecido como o pai da genética?", o: ["Gregor Mendel", "Charles Darwin", "Louis Pasteur", "Aristóteles"], a: "Gregor Mendel"},
+                {q: "Vírus são considerados seres vivos?", o: ["É um debate, não possuem célula", "Sim, sempre", "Não, nunca", "Apenas quando estão em grupo"], a: "É um debate, não possuem célula"},
+                {q: "Qual destes não é um dos cinco reinos dos seres vivos?", o: ["Reino Mineral", "Reino Animalia", "Reino Plantae", "Reino Fungi"], a: "Reino Mineral"},
+                {q: "Qual o nome da principal proteína encontrada no cabelo e nas unhas?", o: ["Queratina", "Colágeno", "Miosina", "Hemoglobina"], a: "Queratina"}
+            ]},
+            matematica: { quiz: [
+                {q: "Qual o resultado de 9 x 8?", o: ["72", "63", "81", "64"], a: "72"},
+                {q: "Quantos lados tem um hexágono?", o: ["6", "5", "7", "8"], a: "6"},
+                {q: "Qual é a raiz quadrada de 144?", o: ["12", "11", "13", "14"], a: "12"},
+                {q: "O que é o número Pi (π) aproximadamente?", o: ["3,14", "2,71", "1,61", "4,0"], a: "3,14"},
+                {q: "Em um triângulo retângulo, a soma dos quadrados dos catetos é igual ao quadrado da...", o: ["Hipotenusa", "Área", "Base", "Altura"], a: "Hipotenusa"},
+                {q: "Qual o resultado de 5! (fatorial de 5)?", o: ["120", "25", "15", "60"], a: "120"},
+                {q: "Um século tem quantos anos?", o: ["100", "10", "1000", "50"], a: "100"},
+                {q: "Qual é o próximo número primo depois de 13?", o: ["17", "14", "15", "16"], a: "17"},
+                {q: "Se um produto custa R$80 e tem 25% de desconto, qual o preço final?", o: ["R$60", "R$55", "R$65", "R$70"], a: "R$60"},
+                {q: "Qual é a fórmula da área de um círculo?", o: ["π * r²", "2 * π * r", "π * d", "base * altura"], a: "π * r²"},
+                {q: "Qual o valor de 2 elevado à potência de 10?", o: ["1024", "100", "20", "512"], a: "1024"},
+                {q: "Quantos graus tem a soma dos ângulos internos de qualquer triângulo?", o: ["180°", "90°", "360°", "270°"], a: "180°"},
+                {q: "Qual polígono tem 8 lados?", o: ["Octógono", "Heptágono", "Nonágono", "Decágono"], a: "Octógono"},
+                {q: "O que significa 'MDC' em matemática?", o: ["Máximo Divisor Comum", "Mínimo Divisor Comum", "Múltiplo Direto Central", "Média de Divisão Contínua"], a: "Máximo Divisor Comum"},
+                {q: "Qual o resultado da expressão 5 + (3 * 2)?", o: ["11", "16", "13", "30"], a: "11"}
+            ]}
+        };
+        
+        // =======================================================================
+        // 2. FUNÇÕES DE UI E NAVEGAÇÃO
+        // =======================================================================
+        function showScreen(screenId) {
+            const targetScreen = document.getElementById(screenId);
+            if(targetScreen) {
+                document.querySelector('.screen.active')?.classList.remove('active');
+                targetScreen.classList.add('active');
+                currentScreenId = screenId;
+                window.scrollTo(0,0);
+                document.getElementById('player-score-container').style.display = (screenId === 'quizScreen' && !gameState.roomCode) ? 'block' : 'none';
+            }
+        }
+        function showModal(modalId) { document.getElementById(modalId)?.classList.add('active'); }
+        function hideAllModals() { document.querySelectorAll('.modal-overlay').forEach(m => m.classList.remove('active')); }
+        
+        function handleInteraction(e) {
+            const el = e.currentTarget;
+            const action = el.dataset.action;
+            const target = el.dataset.target;
+
+            if (action === 'navigate') showScreen(target);
+            else if (action === 'show-modal') showModal(target);
+            else if (action === 'close-modal') hideAllModals();
+            else if (action === 'start-default-quiz') startDefaultQuiz(el.dataset.subject);
+            else if (action === 'go-to-editor') {
+                document.getElementById('quizEditorForm').reset();
+                document.getElementById('editingQuizId').value = '';
+                document.getElementById('createQuizTitle').textContent = 'Criar Novo Quiz';
+                document.getElementById('questionsEditorContainer').innerHTML = '';
+                document.getElementById('quizCoverPreview').src = 'https://via.placeholder.com/320x180.png?text=Imagem+de+Capa';
+                document.getElementById('quizCoverUrl').value = '';
+                questionEditorCounter = 0;
+                addQuestionEditor();
+                showScreen('createQuizScreen');
+            }
+        }
+        document.querySelectorAll('[data-action]').forEach(el => el.addEventListener('click', handleInteraction));
+        document.getElementById('leaveLobbyBtn').addEventListener('click', leaveLobby);
+        document.querySelector('[data-target="marketplaceScreen"]').addEventListener('click', renderMarketplace);
+        document.getElementById('marketplaceSearch').addEventListener('input', renderMarketplace);
+        document.getElementById('submitJoinBtn').addEventListener('click', handleJoinGame);
+        document.getElementById('startGameBtn').addEventListener('click', handleStartGame);
+        document.getElementById('nextQuestionBtn').addEventListener('click', handleNextQuestion);
+
+        // =======================================================================
+        // 3. LÓGICA DO QUIZ PADRÃO (SOLO)
+        // =======================================================================
+        function startDefaultQuiz(subject) {
+            if (!defaultContent[subject]) return;
+            currentSubject = subject;
+            score = 0;
+            currentQuestionIndex = 0;
+            lives = 3;
+            streak = 0;
+            currentQuiz = [...defaultContent[subject].quiz].sort(() => Math.random() - 0.5);
+            document.getElementById('score').textContent = score;
+            document.getElementById('totalQuestions').textContent = currentQuiz.length;
+            updateLivesDisplay();
+            updateStreakDisplay();
+            showScreen('quizScreen');
+            loadQuestion();
+        }
+
+        function updateLivesDisplay() {
+            const container = document.getElementById('lives-container');
+            container.innerHTML = '';
+            for (let i = 0; i < lives; i++) {
+                container.innerHTML += `<i class="fas fa-heart" style="color: var(--cor-errado);"></i>`;
+            }
+        }
+
+        function updateStreakDisplay() {
+            const container = document.getElementById('streak-container');
+            container.innerHTML = streak > 0 ? `<i class="fas fa-fire"></i> ${streak}` : '';
+        }
+
+        function playSound(type) {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            gainNode.gain.value = 0.1;
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            switch(type) {
+                case 'click':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = 800;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.05);
+                    break;
+                case 'correct':
+                    oscillator.type = 'triangle';
+                    oscillator.frequency.value = 1000;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                case 'incorrect':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.value = 300;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.3);
+                    break;
+                case 'gameover':
+                    oscillator.type = 'sine';
+                    oscillator.frequency.setValueAtTime(440, audioContext.currentTime);
+                    oscillator.frequency.exponentialRampToValueAtTime(110, audioContext.currentTime + 1);
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 1);
+                    break;
+                case 'newQuestion':
+                    oscillator.type = 'square';
+                    oscillator.frequency.value = 523.25;
+                    oscillator.start();
+                    oscillator.stop(audioContext.currentTime + 0.1);
+                    break;
+            }
+        }
+
+        function showFullscreenFeedback(type, message) {
+            const feedback = document.getElementById('fullscreen-feedback');
+            feedback.textContent = message;
+            feedback.className = `show ${type}`;
+            setTimeout(() => {
+                feedback.classList.remove('show');
+            }, 1500);
+        }
+
+        function loadQuestion() {
+            if (lives <= 0) {
+                showFinalScore();
+                return;
+            }
+            
+            if (currentQuestionIndex < currentQuiz.length) {
+                const question = currentQuiz[currentQuestionIndex];
+                const qMedia = document.getElementById('questionMedia');
+                document.getElementById('questionText').textContent = question.q;
+                document.getElementById('currentQuestion').textContent = currentQuestionIndex + 1;
+                document.getElementById('progress-bar').style.width = `${(currentQuestionIndex / currentQuiz.length) * 100}%`;
+                
+                if (question.mediaUrl && question.mediaType === 'image') {
+                    qMedia.style.display = 'block';
+                    qMedia.src = question.mediaUrl;
+                } else {
+                    qMedia.style.display = 'none';
+                    qMedia.src = '';
+                }
+                
+                const optionsContainer = document.getElementById('optionsContainer');
+                optionsContainer.innerHTML = '';
+                const options = [...question.o].sort(() => Math.random() - 0.5);
+                const shapes = [{ n: 'triangulo', i: '▲' }, { n: 'losango', i: '♦' }, { n: 'circulo', i: '●' }, { n: 'quadrado', i: '■' }];
+                options.forEach((opt, index) => {
+                    const btn = document.createElement('button');
+                    btn.className = `option-button ${shapes[index].n}`;
+                    btn.innerHTML = `<span class="shape">${shapes[index].i}</span> <span class="text">${opt}</span>`;
+                    btn.onclick = () => handleAnswer(btn, opt, question.a);
+                    optionsContainer.appendChild(btn);
+                });
+                
+                playSound('newQuestion');
+            } else {
+                showFinalScore();
+            }
+        }
+        
+        function handleAnswer(btn, selected, correct) {
+            const allOptions = document.querySelectorAll('.option-button');
+            allOptions.forEach(b => { b.onclick = null; b.disabled = true; });
+            
+            if(selected === correct) {
+                streak++;
+                score += BASE_POINTS + (streak * STREAK_BONUS);
+                document.getElementById('score').textContent = score;
+                btn.classList.add('correct');
+                playSound('correct');
+                showFullscreenFeedback('correct', 'CORRETO!');
+            } else {
+                streak = 0;
+                lives--;
+                btn.classList.add('wrong');
+                allOptions.forEach(optBtn => { if(optBtn.querySelector('.text').textContent === correct) optBtn.classList.add('reveal-correct'); });
+                playSound('incorrect');
+                showFullscreenFeedback('incorrect', 'ERRADO!');
+            }
+            
+            updateLivesDisplay();
+            updateStreakDisplay();
+            
+            setTimeout(() => { 
+                currentQuestionIndex++; 
+                loadQuestion(); 
+            }, 2000);
+        }
+
+        function showFinalScore() {
+            document.getElementById('questionText').innerHTML = lives <= 0 ? `Fim de Jogo!` : `Quiz Concluído!`;
+            document.getElementById('optionsContainer').innerHTML = `
+                <div class="glass-card" style="grid-column: 1 / -1; text-align: center;">
+                    <p style="font-size: 1.5rem;">Sua pontuação final foi:</p>
+                    <p style="font-size: 4rem; font-weight: bold; color: var(--cor-geral);">${score}</p>
+                    ${lives <= 0 ? '<p style="color: var(--cor-errado);">Você perdeu todas as vidas!</p>' : ''}
+                    <button class="btn btn-primary" data-action="navigate" data-target="mainMenu" style="margin-top: 2rem;">Voltar ao Menu</button>
+                </div>`;
+            document.querySelector('#optionsContainer button').addEventListener('click', handleInteraction);
+            
+            if (lives <= 0) {
+                playSound('gameover');
+            }
+        }
+
+        // =======================================================================
+        // 4. MODO PROFESSOR: CRUD DE QUIZZES COM SUPABASE
+        // =======================================================================
+        document.getElementById('submitPasswordBtn').addEventListener('click', () => {
+            if(document.getElementById('passwordInput').value === '123456'){
+                hideAllModals();
+                showScreen('professorPanel');
+                renderCustomQuizzes();
+            } else {
+                document.getElementById('passwordError').style.display = 'block';
+            }
+        });
+        
+        window.renderCustomQuizzes = async function() {
+            const listContainer = document.getElementById('customQuizzesList');
+            listContainer.innerHTML = '<p>Buscando seus quizzes na nuvem...</p>';
+            
+            const { data: quizzes, error } = await supabase.from('quizzes').select('*');
+            
+            if (error) {
+                listContainer.innerHTML = `<p style="color:var(--cor-errado)">Erro ao carregar quizzes: ${error.message}</p>`;
+                return;
+            }
+            
+            listContainer.innerHTML = '';
+            if (!quizzes || quizzes.length === 0) {
+                listContainer.innerHTML = '<p>Você ainda não criou nenhum quiz. Clique em "Criar Novo Quiz" para começar!</p>';
+                return;
+            }
+            quizzes.forEach(quiz => {
+                const item = document.createElement('div');
+                item.className = 'list-item';
+                item.innerHTML = `
+                    <div>
+                        <div class="list-item-title">${quiz.name}</div>
+                        <small style="color:var(--cor-texto-secundario); text-transform: capitalize;">
+                            ${quiz.subject} - ${quiz.questions.length} Questões - Cód: ${quiz.id}
+                        </small>
+                    </div>
+                    <div class="list-item-actions">
+                        <button title="Criar Sala de Jogo" class="btn btn-primary btn-sm" onclick="window.createGameRoom('${quiz.id}')"><i class="fas fa-play"></i> Iniciar</button>
+                        <button title="Publicar no Marketplace" class="btn btn-success btn-sm" onclick="window.publishQuiz('${quiz.id}')"><i class="fas fa-store"></i></button>
+                        <button title="Resultados" onclick="window.viewResults('${quiz.id}', '${quiz.name}')"><i class="fas fa-chart-bar"></i></button>
+                        <button title="Editar Quiz" onclick="window.editQuiz('${quiz.id}')"><i class="fas fa-edit"></i></button>
+                        <button title="Excluir Quiz" onclick="window.deleteQuiz('${quiz.id}')" class="btn-danger"><i class="fas fa-trash"></i></button>
+                    </div>`;
+                listContainer.appendChild(item);
+            });
+        }
+
+        document.getElementById('addQuestionBtn').addEventListener('click', () => addQuestionEditor());
+        
+        function addQuestionEditor(questionData = null) {
+            questionEditorCounter++;
+            const container = document.getElementById('questionsEditorContainer');
+            const editorDiv = document.createElement('div');
+            editorDiv.className = 'question-editor';
+            editorDiv.id = `q-editor-${questionEditorCounter}`;
+            editorDiv.draggable = true;
+            
+            const qText = questionData ? questionData.q : '';
+            const mediaUrl = questionData ? questionData.mediaUrl : '';
+            const options = questionData ? questionData.o : ['', '', '', ''];
+            const correctAnswer = questionData ? questionData.a : '';
+            const points = questionData ? (questionData.points || 1000) : 1000;
+
+            editorDiv.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 1rem;">
+                    <h4 style="margin:0;">Pergunta ${questionEditorCounter}</h4>
+                    <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.parentElement.remove()"><i class="fas fa-trash"></i></button>
+                </div>
+                <div class="form-group">
+                    <input type="text" class="input-field question-title" placeholder="Enunciado da pergunta" value="${qText}" required>
+                </div>
+                <div class="form-group">
+                    <label>Mídia da Questão (Opcional)</label>
+                    <div class="media-upload-area">
+                        <img src="${mediaUrl || 'https://via.placeholder.com/80x60.png?text=IMG'}" class="media-preview">
+                        <input type="file" class="input-field media-file" accept="image/*">
+                        <input type="hidden" class="media-url" value="${mediaUrl}">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Pontos por resposta correta</label>
+                    <input type="number" class="input-field question-points" value="${points}" min="100" max="5000" step="100" required>
+                </div>
+                <div class="form-group">
+                    <label>Opções (Marque a correta)</label>
+                    ${[0,1,2,3].map(i => `
+                        <div class="option-editor">
+                            <input type="radio" name="correct-opt-${questionEditorCounter}" value="${i}" ${options[i] === correctAnswer ? 'checked' : ''} required>
+                            <input type="text" class="input-field option-text" placeholder="Opção ${i + 1}" value="${options[i] || ''}" required>
+                        </div>`).join('')
+                    }
+                </div>`;
+            container.appendChild(editorDiv);
+
+            editorDiv.querySelector('.media-file').addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const preview = e.target.closest('.media-upload-area').querySelector('.media-preview');
+                    const reader = new FileReader();
+                    reader.onload = (event) => { preview.src = event.target.result; };
+                    reader.readAsDataURL(file);
+                }
+            });
+            
+            editorDiv.addEventListener('dragstart', (e) => {
+                e.dataTransfer.setData('text/plain', editorDiv.id);
+                editorDiv.classList.add('is-dragging');
+            });
+            
+            editorDiv.addEventListener('dragend', () => editorDiv.classList.remove('is-dragging'));
+        }
+        
+        document.getElementById('questionsEditorContainer').addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const afterElement = getDragAfterElement(e.clientY);
+            const draggable = document.querySelector('.is-dragging');
+            if (!draggable) return;
+            
+            const container = document.getElementById('questionsEditorContainer');
+            if (afterElement == null) container.appendChild(draggable);
+            else container.insertBefore(draggable, afterElement);
+        });
+
+        function getDragAfterElement(y) {
+            const draggableElements = [...document.querySelectorAll('.question-editor:not(.is-dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) return { offset: offset, element: child };
+                else return closest;
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        async function uploadImageAndGetURL(file) {
+            if (!file) return null;
+            const filePath = `public/${Date.now()}_${file.name}`; // public é o subdiretório padrão para acesso
+            
+            const { error } = await supabase.storage.from('quiz_images').upload(filePath, file);
+            if (error) throw error;
+            
+            const { data } = supabase.storage.from('quiz_images').getPublicUrl(filePath);
+            return data.publicUrl;
+        }
+
+        document.getElementById('quizEditorForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const saveBtn = document.getElementById('saveQuizBtn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+            try {
+                const quizId = document.getElementById('editingQuizId').value || `QUIZ${Date.now()}`;
+                const quizData = {
+                    id: quizId,
+                    name: document.getElementById('quizName').value,
+                    subject: document.getElementById('quizSubject').value,
+                    questions: [],
+                    coverImageUrl: document.getElementById('quizCoverUrl').value || null,
+                };
+
+                const coverFileInput = document.getElementById('quizCoverImage');
+                if (coverFileInput.files[0]) {
+                    quizData.coverImageUrl = await uploadImageAndGetURL(coverFileInput.files[0]);
+                }
+
+                const questionEditors = Array.from(document.querySelectorAll('.question-editor'));
+                const questionPromises = questionEditors.map(async (editor) => {
+                    const mediaFileInput = editor.querySelector('.media-file');
+                    let finalMediaUrl = editor.querySelector('.media-url').value;
+                    if (mediaFileInput.files[0]) {
+                        finalMediaUrl = await uploadImageAndGetURL(mediaFileInput.files[0]);
+                    }
+                    
+                    const options = Array.from(editor.querySelectorAll('.option-text')).map(input => input.value);
+                    const correctRadio = editor.querySelector('input[type="radio"]:checked');
+                    if (!correctRadio) throw new Error("Por favor, marque uma resposta correta para cada pergunta.");
+                    
+                    return {
+                        q: editor.querySelector('.question-title').value,
+                        o: options,
+                        a: options[parseInt(correctRadio.value)],
+                        points: parseInt(editor.querySelector('.question-points').value) || 1000,
+                        mediaUrl: finalMediaUrl || null,
+                        mediaType: finalMediaUrl ? 'image' : null
+                    };
+                });
+                
+                quizData.questions = await Promise.all(questionPromises);
+
+                // Use 'upsert' para criar ou atualizar o quiz
+                const { error } = await supabase.from('quizzes').upsert(quizData);
+                if (error) throw error;
+
+                alert('Quiz salvo com sucesso na nuvem! Código: ' + quizId);
+                showScreen('professorPanel');
+                renderCustomQuizzes();
+
+            } catch (error) {
+                alert('Ocorreu um erro ao salvar o quiz: ' + error.message);
+                console.error(error);
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save"></i> Salvar Quiz na Nuvem';
+            }
+        });
+        
+        window.editQuiz = async (quizId) => {
+            const { data: quiz, error } = await supabase.from('quizzes').select('*').eq('id', quizId).single();
+            if (error || !quiz) { alert("Quiz não encontrado!"); return; }
+
+            showScreen('createQuizScreen');
+            document.getElementById('createQuizTitle').textContent = 'Editar Quiz';
+            document.getElementById('editingQuizId').value = quiz.id;
+            document.getElementById('quizName').value = quiz.name;
+            document.getElementById('quizSubject').value = quiz.subject;
+            
+            document.getElementById('quizCoverPreview').src = quiz.coverImageUrl || 'https://via.placeholder.com/320x180.png?text=Imagem+de+Capa';
+            document.getElementById('quizCoverUrl').value = quiz.coverImageUrl || '';
+
+            const questionsContainer = document.getElementById('questionsEditorContainer');
+            questionsContainer.innerHTML = '';
+            questionEditorCounter = 0;
+            quiz.questions.forEach(questionData => addQuestionEditor(questionData));
+        };
+
+        window.deleteQuiz = async (quizId) => {
+            if (confirm(`Tem certeza que deseja excluir o quiz ${quizId}? Esta ação não pode ser desfeita.`)) {
+                // Deleta em cascata: quiz, resultados e do marketplace
+                const { error: quizError } = await supabase.from('quizzes').delete().eq('id', quizId);
+                const { error: resultsError } = await supabase.from('results').delete().eq('quiz_id', quizId);
+                const { error: marketplaceError } = await supabase.from('marketplace').delete().eq('id', quizId);
+                
+                if (quizError) alert('Erro ao excluir o quiz: ' + quizError.message);
+                else {
+                    alert('Quiz excluído com sucesso.');
+                    renderCustomQuizzes();
+                }
+            }
+        };
+
+        window.viewResults = async (quizId, quizName) => {
+            document.getElementById('resultsQuizTitle').textContent = `Resultados: ${quizName}`;
+            showScreen('resultsScreen');
+            
+            const resultsContainer = document.getElementById('resultsList');
+            resultsContainer.innerHTML = '<p>Carregando resultados...</p>';
+            
+            const { data: results, error } = await supabase.from('results').select('*').eq('quiz_id', quizId);
+
+            if(error){ resultsContainer.innerHTML = `<p style="color:var(--cor-errado)">Erro: ${error.message}</p>`; return; }
+            if (!results || results.length === 0) { resultsContainer.innerHTML = '<p>Nenhum resultado encontrado para este quiz.</p>'; return; }
+                
+            resultsContainer.innerHTML = '';
+            // Agrupar resultados por sala (room_code)
+            const resultsByRoom = results.reduce((acc, result) => {
+                (acc[result.room_code] = acc[result.room_code] || []).push(result);
+                return acc;
+            }, {});
+
+            Object.entries(resultsByRoom).forEach(([roomCode, roomResults]) => {
+                const roomDiv = document.createElement('div');
+                roomDiv.className = 'glass-card';
+                roomDiv.style.marginBottom = '2rem';
+                roomDiv.innerHTML = `<h4 style="margin-bottom: 1rem;">Sala: ${roomCode}</h4>`;
+                
+                const players = roomResults[0].players_final.sort((a,b) => b.score - a.score);
+                
+                players.forEach((player, index) => {
+                    const playerDiv = document.createElement('div');
+                    playerDiv.className = 'leaderboard-item';
+                    playerDiv.innerHTML = `
+                        <span class="rank">#${index + 1}</span>
+                        <span class="name" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.5rem;">${player.avatar}</span>
+                            ${player.name}
+                        </span>
+                        <span class="score">${player.score}</span>
+                    `;
+                    roomDiv.appendChild(playerDiv);
+                });
+                
+                resultsContainer.appendChild(roomDiv);
+            });
+        };
+        
+        // =======================================================================
+        // 5. MARKETPLACE COM SUPABASE
+        // =======================================================================
+        async function renderMarketplace() {
+            const searchTerm = document.getElementById('marketplaceSearch').value.toLowerCase();
+            const container = document.getElementById('marketplace-list');
+            container.innerHTML = '<p>Carregando quizzes da comunidade...</p>';
+            
+            let query = supabase.from('marketplace').select('*');
+            if(searchTerm) {
+                // Para busca simples, use 'ilike'. Para busca mais complexa (full-text), seria necessário configurar no Supabase.
+                query = query.or(`name.ilike.%${searchTerm}%,subject.ilike.%${searchTerm}%,author.ilike.%${searchTerm}%`);
+            }
+            
+            const { data: marketplaceData, error } = await query;
+            if (error) { container.innerHTML = `<p style="color:var(--cor-errado)">Erro: ${error.message}</p>`; return; }
+            if (!marketplaceData || marketplaceData.length === 0) { container.innerHTML = '<p>Nenhum quiz encontrado.</p>'; return; }
+                
+            container.innerHTML = '';
+            marketplaceData.forEach(quiz => {
+                const card = document.createElement('div');
+                card.className = 'marketplace-card glass-card';
+                card.innerHTML = `
+                    <h3>${quiz.name}</h3>
+                    <p>${quiz.description || 'Quiz educativo sem descrição.'}</p>
+                    <div style="display: flex; justify-content: space-between; margin-top: 1rem;">
+                        <span class="author"><i class="fas fa-user"></i> ${quiz.author || 'Anônimo'}</span>
+                        <span style="text-transform: capitalize; color: var(--cor-${quiz.subject});">
+                            <i class="fas ${getSubjectIcon(quiz.subject)}"></i> ${quiz.subject}
+                        </span>
+                    </div>
+                    <div class="stats">
+                        <span><i class="fas fa-question-circle"></i> ${quiz.questions.length} questões</span>
+                        <span><i class="fas fa-download"></i> ${quiz.downloads || 0} clonados</span>
+                    </div>
+                    <div style="margin-top: 1.5rem; display: flex; gap: 1rem;">
+                        <button class="btn btn-primary" onclick="window.cloneQuiz('${quiz.id}')" style="flex-grow: 1;">
+                            <i class="fas fa-copy"></i> Clonar para Meus Quizzes
+                        </button>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+        
+        function getSubjectIcon(subject) {
+            switch(subject) {
+                case 'fisica': return 'fa-atom';
+                case 'quimica': return 'fa-flask-vial';
+                case 'biologia': return 'fa-dna';
+                case 'matematica': return 'fa-calculator';
+                default: return 'fa-book';
+            }
+        }
+        
+        window.publishQuiz = async (quizId) => {
+            const { data: quizData, error } = await supabase.from('quizzes').select('*').eq('id', quizId).single();
+            if (error || !quizData) { alert('Quiz não encontrado!'); return; }
+            
+            const authorName = prompt('Digite seu nome para créditos no marketplace:');
+            if (!authorName) return;
+            const description = prompt('Digite uma breve descrição para o quiz (opcional):') || '';
+            
+            const publishData = {
+                ...quizData,
+                author: authorName,
+                description: description,
+                published_at: new Date().toISOString(), // Supabase usa timestamps padrão
+                downloads: 0
+            };
+            
+            const { error: publishError } = await supabase.from('marketplace').upsert(publishData);
+            if (publishError) { alert(`Erro ao publicar: ${publishError.message}`); return; }
+
+            alert('Quiz publicado com sucesso no marketplace!');
+            renderMarketplace();
+        };
+        
+        window.cloneQuiz = async (originalQuizId) => {
+            // Nota: Para incrementar 'downloads' de forma atômica, o ideal é usar uma Função RPC no Supabase.
+            // Por simplicidade aqui, fazemos leitura e escrita, o que pode ter race conditions em alta concorrência.
+            // Para criar a função, vá em SQL Editor no Supabase e crie:
+            // create function increment_downloads (quiz_id_text text) returns void as $$
+            //   update marketplace set downloads = downloads + 1 where id = quiz_id_text;
+            // $$ language sql volatile;
+            await supabase.rpc('increment_downloads', { quiz_id_text: originalQuizId });
+            
+            const { data: originalQuiz, error } = await supabase.from('marketplace').select('*').eq('id', originalQuizId).single();
+            if (error || !originalQuiz) { alert('Quiz não encontrado no marketplace!'); return; }
+            
+            const newQuizId = `QUIZ${Date.now()}`;
+            
+            // Remove colunas do marketplace que não devem ir para a tabela de quizzes
+            const { author, description, published_at, downloads, ...quizData } = originalQuiz;
+            quizData.id = newQuizId;
+            quizData.name = `Cópia de ${quizData.name}`;
+            
+            const { error: insertError } = await supabase.from('quizzes').insert(quizData);
+            if(insertError) { alert(`Erro ao clonar: ${insertError.message}`); return; }
+
+            alert('Quiz clonado com sucesso! Você pode editá-lo na área do Professor.');
+            showScreen('professorPanel');
+            renderCustomQuizzes();
+            renderMarketplace();
+        };
+
+        // =======================================================================
+        // 6. SALA DE AULA EM TEMPO REAL COM SUPABASE
+        // =======================================================================
+        window.createGameRoom = async (quizId) => {
+            const roomCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const { data: quizData, error } = await supabase.from('quizzes').select('name, subject, questions').eq('id', quizId).single();
+            if (error || !quizData) { alert("Erro: Quiz não encontrado!"); return; }
+
+            const roomData = {
+                room_code: roomCode, // Supabase usa snake_case por padrão
+                quiz_id: quizId, 
+                quiz_title: quizData.name, 
+                host_id: gameState.playerId, 
+                status: 'lobby', 
+                current_question_index: -1,
+                players: {}, // Usaremos JSONB para armazenar jogadores e respostas
+                answers: {}
+            };
+            
+            const { error: createError } = await supabase.from('gameRooms').insert(roomData);
+            if(createError) { alert(`Erro ao criar sala: ${createError.message}`); return; }
+            
+            gameState.isHost = true;
+            await joinLobby(roomCode, "Professor");
+        };
+
+        async function handleJoinGame() {
+            const playerName = document.getElementById('studentNameInput').value.trim();
+            const roomCode = document.getElementById('roomCodeInput').value.trim();
+            const selectedEmoji = document.querySelector('.emoji-btn.selected')?.dataset.emoji || "😀";
+            
+            if (!playerName || !roomCode) {
+                 document.getElementById('roomCodeError').style.display = 'block';
+                 document.getElementById('roomCodeError').textContent = 'Preencha todos os campos!';
+                 return;
+            }
+            
+            const { data: room, error } = await supabase.from('gameRooms').select('room_code').eq('room_code', roomCode).single();
+            if (error || !room) {
+                document.getElementById('roomCodeError').style.display = 'block';
+                document.getElementById('roomCodeError').textContent = 'Código inválido ou sala não encontrada.';
+                return;
+            }
+            
+            gameState.playerAvatar = selectedEmoji;
+            await joinLobby(roomCode, playerName);
+        }
+
+        async function joinLobby(roomCode, playerName) {
+            gameState.roomCode = roomCode;
+            gameState.playerName = playerName;
+
+            // Inscreve no canal da sala
+            const channel = supabase.channel(`room:${roomCode}`, {
+                config: {
+                    presence: { key: gameState.playerId },
+                },
+            });
+
+            channel.on('presence', { event: 'sync' }, () => {
+                const presenceState = channel.presenceState();
+                const players = Object.values(presenceState).map(p => p[0]);
+                updatePlayerList(players);
+            });
+            
+            channel.subscribe(async (status) => {
+                if (status === 'SUBSCRIBED') {
+                    await channel.track({ 
+                        name: playerName, 
+                        avatar: gameState.playerAvatar,
+                        id: gameState.playerId,
+                        score: 0
+                    });
+                }
+            });
+
+            hideAllModals();
+            showScreen('gameLobbyScreen');
+            listenToRoomChanges(roomCode, channel);
+        }
+        
+        function updatePlayerList(players) {
+            const playerList = document.getElementById('playerList');
+            playerList.innerHTML = '';
+            players.forEach(player => {
+                const chip = document.createElement('div');
+                chip.className = 'player-chip';
+                chip.innerHTML = `
+                    <div class="player-avatar">${player.avatar || '😀'}</div>
+                    <div>${player.name}</div>
+                `;
+                playerList.appendChild(chip);
+            });
+        }
+        
+        function listenToRoomChanges(roomCode, channel) {
+            if (activeListeners.roomChannel) activeListeners.roomChannel.unsubscribe();
+            activeListeners.roomChannel = channel;
+
+            channel.on('postgres_changes', 
+                { event: 'UPDATE', schema: 'public', table: 'gameRooms', filter: `room_code=eq.${roomCode}` }, 
+                async (payload) => {
+                    const roomData = payload.new;
+                    
+                    document.getElementById('lobbyQuizTitle').textContent = roomData.quiz_title;
+                    document.getElementById('lobbyRoomCode').textContent = roomCode;
+                    document.getElementById('startGameBtn').style.display = gameState.isHost ? 'inline-flex' : 'none';
+
+                    if (!gameState.currentQuizData && roomData.quiz_id) {
+                         const { data, error } = await supabase.from(`quizzes`).select('*').eq('id', roomData.quiz_id).single();
+                         if (data) gameState.currentQuizData = data;
+                    }
+                    
+                    switch(roomData.status) {
+                        case 'in_progress':
+                            hideAllModals();
+                            showScreen('quizScreen');
+                            loadRealtimeQuestion(roomData, roomData.current_question_index);
+                            break;
+                        case 'leaderboard':
+                            await showLeaderboard(roomData);
+                            break;
+                        case 'finished':
+                            showFinalLeaderboard(roomData);
+                            break;
+                    }
+                }
+            ).on('postgres_changes', 
+                { event: 'DELETE', schema: 'public', table: 'gameRooms', filter: `room_code=eq.${roomCode}` },
+                () => {
+                    if (currentScreenId !== 'mainMenu') {
+                         alert("A sala de jogo foi fechada pelo professor.");
+                         leaveLobby();
+                    }
+                }
+            );
+        }
+        
+        async function handleStartGame() {
+            if (gameState.isHost && gameState.roomCode) {
+                // Pega a lista de jogadores da Presença e salva no BD
+                const presenceState = activeListeners.roomChannel.presenceState();
+                const players = Object.fromEntries(
+                    Object.values(presenceState).map(p => [p[0].id, { name: p[0].name, avatar: p[0].avatar, score: 0 }])
+                );
+                
+                await supabase.from(`gameRooms`).update({
+                    status: 'in_progress',
+                    current_question_index: 0,
+                    question_start_time: new Date().toISOString(),
+                    players: players,
+                    answers: {} // Limpa respostas
+                }).eq('room_code', gameState.roomCode);
+            }
+        }
+
+        function loadRealtimeQuestion(roomData, qIndex) {
+            if (!gameState.currentQuizData) return;
+            const question = gameState.currentQuizData.questions[qIndex];
+            gameState.questionStartTime = new Date(roomData.question_start_time).getTime();
+            
+            document.getElementById('questionText').textContent = question.q;
+            document.getElementById('currentQuestion').textContent = qIndex + 1;
+            document.getElementById('totalQuestions').textContent = gameState.currentQuizData.questions.length;
+            document.getElementById('progress-bar').style.width = `${((qIndex + 1) / gameState.currentQuizData.questions.length) * 100}%`;
+            
+            const qMedia = document.getElementById('questionMedia');
+            qMedia.style.display = (question.mediaUrl && question.mediaType === 'image') ? 'block' : 'none';
+            qMedia.src = question.mediaUrl || '';
+            
+            const optionsContainer = document.getElementById('optionsContainer');
+            optionsContainer.innerHTML = '';
+            const shapes = [{ n: 'triangulo', i: '▲' }, { n: 'losango', i: '♦' }, { n: 'circulo', i: '●' }, { n: 'quadrado', i: '■' }];
+            question.o.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = `option-button ${shapes[index].n}`;
+                btn.innerHTML = `<span class="shape">${shapes[index].i}</span> <span class="text">${opt}</span>`;
+                btn.onclick = () => submitAnswer(opt);
+                optionsContainer.appendChild(btn);
+            });
+            
+            if (gameState.isHost) {
+                 setTimeout(async () => {
+                    const { data, error } = await supabase.from('gameRooms').select('status').eq('room_code', gameState.roomCode).single();
+                    if (data && data.status === 'in_progress') {
+                         await supabase.from('gameRooms').update({ status: 'leaderboard' }).eq('room_code', gameState.roomCode);
+                    }
+                }, 20000); // Tempo para responder
+            }
+        }
+        
+        async function submitAnswer(selectedAnswer) {
+            document.querySelectorAll('.option-button').forEach(b => {
+                b.disabled = true;
+                if(b.querySelector('.text').textContent === selectedAnswer) b.style.transform = 'scale(1.05)';
+            });
+            
+            const timeTaken = (Date.now() - gameState.questionStartTime) / 1000;
+            const { data: roomData } = await supabase.from('gameRooms').select('answers, current_question_index').eq('room_code', gameState.roomCode).single();
+            const qIndex = roomData.current_question_index;
+            
+            const currentAnswers = roomData.answers || {};
+            if (!currentAnswers[qIndex]) currentAnswers[qIndex] = {};
+            currentAnswers[qIndex][gameState.playerId] = { answer: selectedAnswer, time: timeTaken };
+
+            await supabase.from('gameRooms').update({ answers: currentAnswers }).eq('room_code', gameState.roomCode);
+        }
+        
+        async function showLeaderboard(roomData) {
+            const qIndex = roomData.current_question_index;
+            const question = gameState.currentQuizData.questions[qIndex];
+            const correctAnswer = question.a;
+            const answers = roomData.answers ? (roomData.answers[qIndex] || {}) : {};
+            const basePoints = question.points || 1000;
+            let updatedPlayers = { ...roomData.players };
+
+            if (gameState.isHost) {
+                for (const playerId in updatedPlayers) {
+                    if (answers[playerId] && answers[playerId].answer === correctAnswer) {
+                        const timeScore = Math.max(0, basePoints - (answers[playerId].time * 50));
+                        const pointsGained = Math.floor(timeScore);
+                        updatedPlayers[playerId].score += pointsGained;
+                    }
+                }
+                await supabase.from('gameRooms').update({ players: updatedPlayers }).eq('room_code', gameState.roomCode);
+            } else {
+                updatedPlayers = roomData.players; // Apenas exibe o placar que o host calculou
+            }
+            
+            const playersList = Object.values(updatedPlayers).sort((a, b) => b.score - a.score);
+            
+            const leaderboardContent = document.getElementById('leaderboardContent');
+            leaderboardContent.innerHTML = '';
+            
+            playersList.slice(0, 10).forEach((player, index) => {
+                const isCurrentPlayer = player.id === gameState.playerId;
+                leaderboardContent.innerHTML += `
+                    <div class="leaderboard-item" style="${isCurrentPlayer ? 'background-color: rgba(0,123,255,0.1);' : ''}">
+                        <span class="rank">#${index + 1}</span>
+                        <span class="name" style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.5rem;">${player.avatar || '😀'}</span>
+                            ${player.name}
+                        </span>
+                        <span class="score counting-score">${player.score}</span>
+                    </div>`;
+            });
+
+            document.getElementById('nextQuestionBtn').style.display = gameState.isHost ? 'inline-flex' : 'none';
+            document.getElementById('leaderboardTitle').textContent = "Placar Parcial";
+            showModal('leaderboardOverlay');
+        }
+        
+        function showPerformanceFeedback(message, type) {
+            const feedback = document.getElementById('performance-feedback');
+            feedback.textContent = message;
+            feedback.className = `performance-feedback ${type} show`;
+            setTimeout(() => { feedback.classList.remove('show'); }, 3000);
+        }
+        
+        async function handleNextQuestion() {
+            if(!gameState.isHost) return;
+            const { data: roomData } = await supabase.from('gameRooms').select('current_question_index').eq('room_code', gameState.roomCode).single();
+            const newIndex = roomData.current_question_index + 1;
+            
+            if (newIndex < gameState.currentQuizData.questions.length) {
+                await supabase.from('gameRooms').update({
+                    status: 'in_progress',
+                    current_question_index: newIndex,
+                    answers: {},
+                    question_start_time: new Date().toISOString()
+                }).eq('room_code', gameState.roomCode);
+            } else {
+                await supabase.from('gameRooms').update({ status: 'finished' }).eq('room_code', gameState.roomCode);
+            }
+        }
+        
+        async function showFinalLeaderboard(roomData) {
+            showLeaderboard(roomData); // Re-exibe o placar com o estado final
+            document.getElementById('leaderboardTitle').textContent = "Placar Final!";
+            document.getElementById('nextQuestionBtn').textContent = "Fechar Sala";
+            document.getElementById('nextQuestionBtn').onclick = leaveLobby;
+
+            if(gameState.isHost){
+                // Salva os resultados finais na tabela `results`
+                await supabase.from('results').insert({
+                    quiz_id: roomData.quiz_id,
+                    room_code: roomData.room_code,
+                    players_final: Object.values(roomData.players)
+                });
+            }
+        }
+
+        async function leaveLobby() {
+            if (activeListeners.roomChannel) {
+                await activeListeners.roomChannel.unsubscribe();
+                activeListeners.roomChannel = null;
+            }
+            if (gameState.isHost && gameState.roomCode) {
+                // Ao sair, o host deleta a sala
+                await supabase.from('gameRooms').delete().eq('room_code', gameState.roomCode);
+            }
+            gameState = { isHost: false, roomCode: null, playerId: `player_${Date.now()}_${Math.random().toString(36).substr(2, 5)}`, playerName: null, playerAvatar: "😀", currentQuizData: null, questionStartTime: 0 };
+            hideAllModals();
+            showScreen('mainMenu');
+        }
+
+
+        // =======================================================================
+        // 7. ACESSIBILIDADE: CONTROLE POR VOZ E CÂMERA (Sem alterações)
+        // =======================================================================
+        if(SpeechRecognition) {
+            recognition = new SpeechRecognition();
+            recognition.lang = 'pt-BR';
+            recognition.continuous = false; 
+            recognition.interimResults = false;
+            recognition.onstart = () => document.getElementById('access-mic-btn').classList.add('active');
+            recognition.onend = () => {
+                const micBtn = document.getElementById('access-mic-btn');
+                micBtn.classList.remove('active');
+                if (isMicActive) { try { recognition.start(); } catch(e) { console.error("Erro ao reiniciar mic:", e); isMicActive = false; } }
+            };
+            recognition.onerror = e => console.error("Erro de voz:", e.error);
+            recognition.onresult = (event) => {
+                const lastResult = event.results[event.results.length - 1][0];
+                const command = lastResult.transcript.trim().toLowerCase();
+                const confidence = lastResult.confidence || 1;
+                if (confidence >= SENSITIVITIES.micConfidence) handleVoiceCommand(command);
+            };
+            document.getElementById('access-mic-btn').addEventListener('click', () => {
+                const micBtn = document.getElementById('access-mic-btn');
+                if (isMicActive) {
+                    isMicActive = false;
+                    recognition.stop();
+                    micBtn.classList.remove('active');
+                } else {
+                    isMicActive = true;
+                    try { recognition.start(); micBtn.classList.add('active'); } catch(e) { console.error("Não foi possível iniciar o mic", e); isMicActive = false; }
+                }
+            });
+        } else {
+            document.getElementById('access-mic-btn').style.display = 'none';
+        }
+        function handleVoiceCommand(command) {
+            console.log("Comando de voz recebido:", command);
+            if (command.includes("voltar") || command.includes("menu principal") || command.includes("sair")) {
+                const backBtn = document.querySelector('.screen.active .page-header button, .modal-overlay.active [data-action=close-modal]');
+                if (backBtn) backBtn.click(); return;
+            }
+            if (command.includes("marketplace") || command.includes("loja")) { document.querySelector('[data-target="marketplaceScreen"]')?.click(); return; }
+            if (command.includes("professor") || command.includes("modo professor")) { document.querySelector('[data-target="passwordModal"]')?.click(); return; }
+            if (command.includes("ajustes") || command.includes("configurações")) { document.getElementById('access-settings-btn').click(); return; }
+            if (currentScreenId === 'quizScreen') {
+                const options = [...document.querySelectorAll('.option-button:not(:disabled)')];
+                const commandMap = {
+                    "triângulo": options[0], "opção 1": options[0], "primeira": options[0],
+                    "losango": options[1], "opção 2": options[1], "segunda": options[1],
+                    "círculo": options[2], "opção 3": options[2], "terceira": options[2],
+                    "quadrado": options[3], "opção 4": options[3], "quarta": options[3],
+                };
+                for (const key in commandMap) { if (command.includes(key) && commandMap[key]) { commandMap[key].click(); return; } }
+            }
+            if (currentScreenId === 'gameLobbyScreen' && gameState.isHost && command.includes("iniciar")) { document.getElementById('startGameBtn').click(); }
+            if (document.getElementById('leaderboardOverlay').classList.contains('active') && (command.includes("próxima") || command.includes("continuar"))) { document.getElementById('nextQuestionBtn').click(); }
+            if (currentScreenId === 'mainMenu') {
+                 const subjectMap = { "física": "fisica", "química": "quimica", "biologia": "biologia", "matemática": "matematica" };
+                 for (const key in subjectMap) { if (command.includes(key)) { document.querySelector(`[data-subject="${subjectMap[key]}"]`)?.click(); return; } }
+                 if (command.includes("entrar") || command.includes("sala")) { document.querySelector('[data-target="joinGameModal"]')?.click(); }
+            }
+        }
+        document.querySelectorAll('.emoji-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.emoji-btn').forEach(b => b.classList.remove('selected'));
+                btn.classList.add('selected');
+            });
+        });
+        window.renderAccessibilitySettings = function() {
+            const container = document.getElementById('sensitivity-sliders-container');
+            container.innerHTML = `
+                <div class="form-group"><label>Sensibilidade do PISCAR (Clique) <small>(Menor = mais sensível)</small></label><input type="range" class="input-field" min="0.15" max="0.4" step="0.01" value="${SENSITIVITIES.blink}" oninput="window.updateSensitivity('blink', this.value)"></div>
+                <div class="form-group"><label>Sensibilidade de ABRIR A BOCA (Voltar) <small>(Maior = mais sensível)</small></label><input type="range" class="input-field" min="0.05" max="0.2" step="0.01" value="${SENSITIVITIES.mouthOpen}" oninput="window.updateSensitivity('mouthOpen', this.value)"></div>
+                <div class="form-group"><label>Sensibilidade do SORRISO (Arrastar) <small>(Menor = mais sensível)</small></label><input type="range" class="input-field" min="3.0" max="5.0" step="0.1" value="${SENSITIVITIES.smile}" oninput="window.updateSensitivity('smile', this.value)"></div>
+                <div class="form-group"><label>Confiança do MICROFONE (Comando) <small>(Maior = mais rigoroso)</small></label><input type="range" class="input-field" min="0.1" max="1.0" step="0.05" value="${SENSITIVITIES.micConfidence}" oninput="window.updateSensitivity('micConfidence', this.value)"></div>`;
+        }
+        window.updateSensitivity = (key, value) => { SENSITIVITIES[key] = parseFloat(value); console.log(`Sensibilidade: ${key} = ${value}`); };
+        
+        // =======================================================================
+        // 8. INICIALIZAÇÃO DO SUPABASE
+        // =======================================================================
+        const SUPABASE_URL = 'https://zirvuiekomhudobmtpm.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppcnZ1aWVrb2ttaHVkb2JtdHBtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTQyNjI2NDAsImV4cCI6MjA2OTgzODY0MH0.M_QOEAWZ7gZHAQEI-rdurfjsXIKcRH7NYXOu-I2UUX8';
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
+        console.log("Ciência Interativa Neuro-Acessível 2.0 (Supabase Edition): INICIALIZADO.");
+    });
+    </script>
+
+    <script type="module">
+        // MÓDULO DE ACESSIBILIDADE (NEURO CONTROL) - NÍVEL 2 - SEM ALTERAÇÕES
+        const video = document.getElementById('video-preview');
+        const camBtn = document.getElementById('access-cam-btn');
+        const eyeCursor = document.getElementById('eye-cursor');
+        const settingsBtn = document.getElementById('access-settings-btn');
+        const blinkFeedback = document.getElementById('blink-feedback');
+        
+        let faceMesh, isCameraActive = false, cameraStream;
+        const DEBOUNCE_TIME = { blink: 300, mouthOpen: 600, smile: 400 };
+        let state = { isBlinking: false, blinkTimeout: null, isMouthOpen: false, mouthOpenTimeout: null, isSmiling: false, wasSmiling: false, smileTimeout: null, isDragging: false, draggedElement: null };
+
+        function getDistance(p1, p2) { return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2)); }
+        
+        function onResults(results) {
+            if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) return;
+            const landmarks = results.multiFaceLandmarks[0];
+            const SENSITIVITIES = window.SENSITIVITIES || { blink: 0.25, mouthOpen: 0.08, smile: 4.0 };
+
+            const p_nose = landmarks[1]; 
+            if(p_nose) {
+                const x = (1 - p_nose.x) * window.innerWidth;
+                const y = p_nose.y * window.innerHeight;
+                eyeCursor.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+                const el = document.elementFromPoint(x, y);
+                document.querySelectorAll('.focused').forEach(e => e.classList.remove('focused'));
+                if (el) {
+                   const focusable = el.closest('[data-action], .option-button, .question-editor, .access-btn, .emoji-btn');
+                   if (focusable) focusable.classList.add('focused');
+                }
+            }
+
+            const p_l_top = landmarks[159], p_l_bottom = landmarks[145], p_l_left = landmarks[33], p_l_right = landmarks[133];
+            const ear = getDistance(p_l_top, p_l_bottom) / getDistance(p_l_left, p_l_right);
+            
+            if (ear < SENSITIVITIES.blink && !state.isBlinking) {
+                state.isBlinking = true;
+                eyeCursor.classList.add('blinking');
+                blinkFeedback.classList.add('show');
+                setTimeout(() => blinkFeedback.classList.remove('show'), 2000);
+                state.blinkTimeout = setTimeout(() => {
+                    const el = document.querySelector('.focused');
+                    if(el) el.click();
+                    setTimeout(() => { state.isBlinking = false; }, DEBOUNCE_TIME.blink);
+                }, 150);
+            } else if (ear >= SENSITIVITIES.blink && state.isBlinking) {
+                eyeCursor.classList.remove('blinking');
+            }
+            
+            if (!state.isBlinking) {
+                const p_m_top = landmarks[13], p_m_bottom = landmarks[14], p_m_left = landmarks[61], p_m_right = landmarks[291];
+                const mar = getDistance(p_m_top, p_m_bottom) / getDistance(p_m_left, p_m_right);
+                if (mar > SENSITIVITIES.mouthOpen && !state.isMouthOpen) {
+                    state.isMouthOpen = true;
+                    state.mouthOpenTimeout = setTimeout(() => {
+                        const backBtn = document.querySelector('.screen.active .page-header button, .modal-overlay.active [data-action=close-modal]');
+                        if (backBtn) backBtn.click();
+                        state.isMouthOpen = false;
+                    }, DEBOUNCE_TIME.mouthOpen);
+                } else if (mar <= SENSITIVITIES.mouthOpen && state.isMouthOpen) {
+                    clearTimeout(state.mouthOpenTimeout);
+                    state.isMouthOpen = false;
+                }
+            }
+            
+            if (!state.isBlinking) {
+                const p_s_left = landmarks[61], p_s_right = landmarks[291], p_s_top = landmarks[0], p_s_bottom = landmarks[17];
+                const smileRatio = getDistance(p_s_left, p_s_right) / getDistance(p_s_top, p_s_bottom);
+                state.isSmiling = smileRatio > SENSITIVITIES.smile;
+                if (state.isSmiling && !state.wasSmiling) {
+                    state.wasSmiling = true;
+                    eyeCursor.classList.add('dragging');
+                } else if (!state.isSmiling && state.wasSmiling) {
+                    state.wasSmiling = false;
+                    eyeCursor.classList.remove('dragging');
+                }
+            }
+        }
+
+        async function startFaceTracking() {
+            faceMesh = new FaceMesh({ locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}` });
+            faceMesh.setOptions({ maxNumFaces: 1, refineLandmarks: true, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
+            faceMesh.onResults(onResults);
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ video: true });
+                video.srcObject = cameraStream;
+                video.style.display = 'block';
+                await video.play();
+                isCameraActive = true;
+                eyeCursor.style.display = 'block';
+                camBtn.classList.add('active');
+                frameLoop();
+            } catch (err) { alert("Erro ao acessar a câmera: " + err); }
+        }
+        function stopFaceTracking() {
+            isCameraActive = false;
+            cameraStream?.getTracks().forEach(track => track.stop());
+            video.style.display = 'none';
+            eyeCursor.style.display = 'none';
+            camBtn.classList.remove('active');
+            if (faceMesh) { faceMesh.close(); faceMesh = null; }
+        }
+        async function frameLoop() { 
+            if (isCameraActive && faceMesh && video.readyState >= 3) { 
+                await faceMesh.send({ image: video }); 
+            }
+            if(isCameraActive) requestAnimationFrame(frameLoop); 
+        }
+        
+        camBtn.addEventListener('click', () => { if (isCameraActive) stopFaceTracking(); else startFaceTracking(); });
+        settingsBtn.addEventListener('click', () => { 
+            document.getElementById('accessibilitySettingsModal').classList.add('active'); 
+            if(window.renderAccessibilitySettings) window.renderAccessibilitySettings(); 
+        });
+    </script>
+</body>
+</html>
