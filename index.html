@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0e2a">
+<meta name="color-scheme" content="dark">
+<title>TriGo — Aprenda trigonometria jogando</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📐</text></svg>">
+<style>
+:root{--p:#7c5cff;--c:#22d3ee;--pk:#ff6bd6;--ok:#34d399;--no:#fb7185;--tx:#eef1ff;--mu:#a9b0dc;--card:rgba(255,255,255,.07);--bd:rgba(255,255,255,.13)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;min-height:100%;color:var(--tx);font:16px/1.55 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+body{background:radial-gradient(1100px 700px at 85% -10%,#2f2088 0,transparent 60%),radial-gradient(900px 600px at -10% 110%,#0b3d6e 0,#0a0e2a 62%);background-attachment:fixed;overflow-x:hidden}
+.orb{position:fixed;border-radius:50%;filter:blur(90px);opacity:.33;z-index:0;pointer-events:none;animation:fl 16s ease-in-out infinite alternate}
+.o1{width:340px;height:340px;background:var(--p);top:-90px;left:28%}.o2{width:300px;height:300px;background:var(--c);bottom:6%;right:-70px;animation-delay:-7s}
+@keyframes fl{to{transform:translate(-50px,60px) scale(1.2)}}
+.shell{position:relative;z-index:1;display:flex;min-height:100vh;max-width:1220px;margin:auto}
+main{flex:1;min-width:0;padding:max(22px,env(safe-area-inset-top)) 18px 120px}
+#v{max-width:860px;margin:auto}
+h1{font-size:clamp(1.7rem,5vw,2.4rem);line-height:1.15;margin:.2em 0 .3em;letter-spacing:-.02em}h2{font-size:clamp(1.15rem,3.6vw,1.5rem);line-height:1.3;margin:.4em 0 .8em}h3{margin:.1em 0 .6em}
+p{margin:.3em 0 1em}.mu{color:var(--mu)}.center{text-align:center}
+nav{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:space-around;padding:8px 6px calc(8px + env(safe-area-inset-bottom));background:rgba(10,14,42,.85);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid var(--bd)}
+nav .brand{display:none;font-size:1.7rem;font-weight:800;letter-spacing:-.03em;margin:0 8px 18px;background:linear-gradient(90deg,var(--c),var(--pk));-webkit-background-clip:text;background-clip:text;color:transparent}
+nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;border:0;background:none;color:var(--mu);font:600 .7rem system-ui;padding:8px 2px;border-radius:14px;cursor:pointer;transition:.25s}
+nav button span{font-size:1.4rem;transition:transform .3s}nav button.on{color:#fff;background:rgba(124,92,255,.28)}nav button.on span{transform:translateY(-2px) scale(1.15)}
+@media(min-width:860px){nav{position:sticky;top:0;height:100vh;width:236px;flex:none;flex-direction:column;justify-content:flex-start;gap:6px;padding:30px 16px;border:0;border-right:1px solid var(--bd);background:transparent;backdrop-filter:none}nav .brand{display:block}nav button{flex:none;flex-direction:row;gap:12px;font-size:1rem;padding:12px 14px}nav button:hover{background:rgba(255,255,255,.07)}main{padding:36px 36px 40px}}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:24px;padding:20px;margin:0 0 16px;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 14px 40px rgba(3,5,30,.4)}
+.hero{background:linear-gradient(135deg,rgba(124,92,255,.38),rgba(34,211,238,.16));padding:26px}
+.pill{display:inline-block;padding:4px 12px;border-radius:99px;background:rgba(34,211,238,.16);color:var(--c);font-size:.82rem;font-weight:700}
+.row{display:flex;flex-wrap:wrap;gap:10px;margin-top:6px}
+.btn{border:0;cursor:pointer;color:#fff;font:700 1rem system-ui;padding:14px 22px;min-height:50px;border-radius:16px;background:linear-gradient(135deg,var(--p),#4f7cff);box-shadow:0 8px 24px rgba(124,92,255,.45);transition:transform .2s,box-shadow .2s,filter .2s}
+.btn:hover{transform:translateY(-2px);filter:brightness(1.1)}.btn:active{transform:scale(.96)}
+.btn.ghost{background:rgba(255,255,255,.09);box-shadow:none;border:1px solid var(--bd)}.btn.big{width:100%;margin-top:6px;animation:pop .4s}
+.btn:disabled{opacity:.45;cursor:not-allowed;transform:none}
+:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}.grid3 .card{margin:0;text-align:center;padding:16px 8px}
+.stat b{display:block;font-size:1.7rem;color:var(--c)}.stat{color:var(--mu);font-size:.85rem}
+.mis{display:flex;align-items:center;gap:14px;width:100%;text-align:left;color:var(--tx);font:inherit;cursor:pointer;transition:transform .2s,border-color .2s}
+.mis>span:nth-child(2){flex:1}.mis:hover:not(:disabled){transform:translateX(5px);border-color:var(--c)}.mis.lk{opacity:.5;cursor:not-allowed}.ic{font-size:2rem}
+.lab svg{width:100%;height:auto;max-height:340px;display:block}
+.sl{width:100%;height:44px;accent-color:var(--pk);margin:6px 0}
+.ang{font-size:2.6rem;font-weight:800;color:var(--pk)}
+.vals{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+.val{background:rgba(255,255,255,.06);border-radius:18px;padding:12px;text-align:center}.val b{display:block;font-size:1.45rem;font-variant-numeric:tabular-nums}.val small{color:var(--mu)}
+.bar{height:10px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;border-radius:9px;background:linear-gradient(90deg,var(--p),var(--c));transition:width .35s cubic-bezier(.3,.8,.3,1);animation:gr 1s}
+@keyframes gr{from{width:0}}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.chip{border:1px solid var(--bd);background:rgba(255,255,255,.07);color:var(--tx);font:700 .95rem system-ui;padding:10px 16px;border-radius:99px;cursor:pointer;transition:.2s}.chip:hover,.chip.on{background:var(--p);border-color:var(--p)}
+.fm{margin-top:10px;padding:14px;border-radius:16px;background:rgba(34,211,238,.1);border:1px dashed var(--c);font-variant-numeric:tabular-nums;animation:pop .35s}.fm div{margin:4px 0}
+.q .qh{display:flex;justify-content:space-between;align-items:center}.fig svg{width:100%;max-width:300px;display:block;margin:0 auto 12px}
+.opts{display:grid;gap:10px}@media(min-width:640px){.opts{grid-template-columns:1fr 1fr}}
+.opt{display:flex;align-items:center;gap:12px;text-align:left;min-height:58px;padding:12px 14px;border-radius:18px;border:2px solid var(--bd);background:rgba(255,255,255,.06);color:var(--tx);font:700 1.05rem system-ui;cursor:pointer;transition:transform .15s,border-color .2s,background .2s}
+.opt i{flex:none;width:34px;height:34px;border-radius:11px;display:grid;place-items:center;background:rgba(255,255,255,.12);font-style:normal;font-size:.9rem}
+.opt:hover:not(:disabled){transform:translateY(-2px);border-color:var(--c)}.opt:disabled{cursor:default}
+.in .opt{animation:pop .45s both var(--d)}
+.opt.sel{border-color:var(--c);background:rgba(34,211,238,.18)}.opt.ok{border-color:var(--ok);background:rgba(52,211,153,.22);animation:glow .7s}.opt.no{border-color:var(--no);background:rgba(251,113,133,.2);animation:shake .45s}.opt.dim{opacity:.45}
+.exp{margin-top:14px;padding:14px;border-radius:16px;animation:pop .35s}.exp.g{background:rgba(52,211,153,.14)}.exp.b{background:rgba(251,113,133,.14)}
+.in{animation:vin .45s cubic-bezier(.2,.8,.2,1)}
+@keyframes vin{from{opacity:0;transform:translateY(16px) scale(.98)}to{opacity:1;transform:none}}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes shake{25%{transform:translateX(-7px)}50%{transform:translateX(7px)}75%{transform:translateX(-4px)}}
+@keyframes glow{0%{box-shadow:0 0 0 0 rgba(52,211,153,.7)}100%{box-shadow:0 0 0 18px rgba(52,211,153,0)}}
+.stars{font-size:3rem;animation:pop .6s}
+input.tx{width:100%;height:52px;border-radius:16px;border:2px solid var(--bd);background:rgba(255,255,255,.07);color:var(--tx);font:700 1.1rem system-ui;padding:0 16px;margin:6px 0;text-transform:none}
+input.tx::placeholder{color:var(--mu);font-weight:500}
+.code{font-size:clamp(2.8rem,14vw,4.6rem);font-weight:900;letter-spacing:.18em;text-align:center;background:linear-gradient(90deg,var(--c),var(--pk));-webkit-background-clip:text;background-clip:text;color:transparent}
+.rk{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:16px;background:rgba(255,255,255,.05);margin:6px 0;animation:pop .4s both}.rk.me{background:rgba(124,92,255,.3)}.rk b:first-child{width:26px;color:var(--c)}.rk span:nth-child(3){flex:1;font-weight:700}.rk em{font-style:normal;font-weight:800;font-variant-numeric:tabular-nums}
+.tm{height:12px;border-radius:9px;background:rgba(255,255,255,.1);overflow:hidden;margin-bottom:14px}.tm i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--c),var(--pk))}
+.sk{margin:12px 0}.sk em{float:right;font-style:normal;color:var(--mu);font-size:.9rem}
+.avs{display:flex;gap:8px;flex-wrap:wrap}.avs .chip{font-size:1.4rem;padding:6px 12px}
+#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translate(-50%,30px);opacity:0;z-index:50;background:#1d2260;border:1px solid var(--bd);padding:12px 20px;border-radius:16px;font-weight:700;transition:.3s;pointer-events:none;max-width:90vw;text-align:center}#toast.on{opacity:1;transform:translate(-50%,0)}
+@media(min-width:860px){#toast{bottom:30px}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="orb o1"></div><div class="orb o2"></div>
+<div class="shell"><nav id="nav"></nav><main><div id="v"></div></main></div>
+<div id="toast" role="status"></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script>
+/* ===== Configuração Supabase ===== */
+const SB_URL='https://ragmtouniqfgmymdkurf.supabase.co',SB_KEY='sb_publishable_ok_eAM6ZiUGweu_wX6rvHQ_X6EUg63s';
+let sb=null;try{sb=supabase.createClient(SB_URL,SB_KEY)}catch(e){}
+
+/* ===== Utilidades e estado local ===== */
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])),rs=()=>Math.floor(Math.random()*2e9);
+const ls={g:(k,d)=>{try{const v=JSON.parse(localStorage.getItem(k));return v==null?d:v}catch(e){return d}},s:(k,v)=>{try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const uuid=()=>crypto.randomUUID?crypto.randomUUID():'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,c=>{const r=Math.random()*16|0;return(c=='x'?r:r&3|8).toString(16)});
+let me=ls.g('tg_me',{id:uuid(),nick:'',av:'🦊'}),P=ls.g('tg_p',{xp:0,sk:{},dn:{}});
+const saveMe=()=>ls.s('tg_me',me),saveP=()=>ls.s('tg_p',P);saveMe();
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2600)}
+const SK={lados:'Identificar lados',razao:'Escolher a razão',calculo:'Calcular razões',lado:'Lados e ângulos',problema:'Problemas reais'};
+const M=[{n:'Reconhecer os lados',ic:'🔺',sk:['lados']},{n:'Seno, cosseno e tangente',ic:'🌊',sk:['razao','lados']},{n:'Calcular razões',ic:'🧮',sk:['calculo']},{n:'Ângulos e lados desconhecidos',ic:'🔍',sk:['lado']},{n:'Problemas contextualizados',ic:'🏗️',sk:['problema']}];
+const acc=k=>{const s=P.sk[k];return s&&s.n?s.ok/s.n:null};
+const weak=()=>Object.keys(SK).map(k=>[k,acc(k)]).filter(x=>x[1]!==null&&x[1]<.8).sort((a,b)=>a[1]-b[1]).map(x=>x[0]);
+function rec(k,ok){const s=P.sk[k]||(P.sk[k]={ok:0,n:0});s.n++;if(ok){s.ok++;P.xp+=10}saveP();
+ if(sb){sb.from('profiles').upsert({id:me.id,nick:me.nick||'Anônimo',avatar:me.av,xp:P.xp}).then(()=>{},()=>{});sb.from('progress').upsert({player_id:me.id,skill:k,correct:s.ok,total:s.n,updated_at:new Date().toISOString()},{onConflict:'player_id,skill'}).then(()=>{},()=>{})}}
+
+/* ===== Gerador de questões (determinístico por semente → todos na sala veem o mesmo) ===== */
+function rng(s){return()=>{s|=0;s=s+0x6D2B79F5|0;let t=Math.imul(s^s>>>15,1|s);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function fig(o={}){const f=o.flip,X=x=>f?220-x:x,L=o.lb||{},hl=o.hl,s=k=>`stroke="${hl==k?'#ff6bd6':'#a9b0dc'}" stroke-width="${hl==k?6:3}" stroke-linecap="round"`;
+ const A=[X(30),120],B=[X(190),120],C=[X(190),30],ln=(p,q,k)=>`<line x1="${p[0]}" y1="${p[1]}" x2="${q[0]}" y2="${q[1]}" ${s(k)}/>`,
+ t=(x,y,a,v)=>v!=null?`<text x="${x}" y="${y}" text-anchor="${a}" fill="#eef1ff" font-size="15" font-weight="700">${v}</text>`:'';
+ return `<svg viewBox="0 0 220 150">${ln(A,B,'ad')}${ln(B,C,'op')}${ln(A,C,'hy')}<path d="M${X(190)+(f?12:-12)} 120v-12h${f?-12:12}" fill="none" stroke="#a9b0dc" stroke-width="2"/>${t(X(30)+(f?-32:32),112,'middle','α')}${t(X(110),141,'middle',L.ad)}${t(X(190)+(f?-10:10),80,f?'end':'start',L.op)}${t(X(98),56,'middle',L.hy)}</svg>`}
+const EX={sen:{30:'1/2',45:'√2/2',60:'√3/2'},cos:{30:'√3/2',45:'√2/2',60:'1/2'},tan:{30:'√3/3',45:'1',60:'√3'}};
+function genQ(seed,i,sk){const R=rng(seed*131+i*7919+17),pick=a=>a[Math.floor(R()*a.length)],sh=a=>a.map(x=>[R(),x]).sort((a,b)=>a[0]-b[0]).map(x=>x[1]),
+ mk=(c,w)=>{const o=sh([c,...w]);return{o,a:o.indexOf(c)}};let q;
+ const val=(f,a,H)=>{const h=H/2,k={sen:{30:h,45:h+'√2',60:h+'√3'},cos:{30:h+'√3',45:h+'√2',60:h}}[f][a];return String(k)};
+ if(sk=='lados'){const hl=pick(['ad','op','hy']),N={ad:'cateto adjacente',op:'cateto oposto',hy:'hipotenusa'};
+  q={t:'Em relação ao ângulo α, como se chama o lado destacado?',...mk(N[hl],Object.values(N).filter(x=>x!=N[hl]).concat('ângulo reto')),f:fig({hl,flip:R()<.5}),e:'A hipotenusa é oposta ao ângulo reto. O cateto oposto está do lado contrário a α. O cateto adjacente encosta em α.'}}
+ else if(sk=='razao'){const r=pick([['sen','oposto','hipotenusa','seno'],['cos','adjacente','hipotenusa','cosseno'],['tan','oposto','adjacente','tangente']]);
+  q={t:`Conhecemos o cateto ${r[1]} e ${r[2]=='hipotenusa'?'a hipotenusa':'o cateto adjacente'} em relação ao ângulo α. Qual razão usar?`,...mk(r[3],['seno','cosseno','tangente','teorema de Pitágoras'].filter(x=>x!=r[3]).slice(0,3)),e:`${r[3][0].toUpperCase()+r[3].slice(1)}: ${r[0]} α = ${r[1]} ÷ ${r[2]}. Lembre: SOH-CAH-TOA.`}}
+ else if(sk=='calculo'){const [a,b,c]=pick([[3,4,5],[5,12,13],[8,15,17],[6,8,10]]),r=pick(['sen','cos','tan']),F={sen:`${a}/${c}`,cos:`${b}/${c}`,tan:`${a}/${b}`},all=[`${a}/${c}`,`${b}/${c}`,`${a}/${b}`,`${b}/${a}`,`${c}/${a}`].filter(x=>x!=F[r]);
+  q={t:`Catetos ${a} e ${b}, hipotenusa ${c}. Se α é o ângulo oposto ao cateto ${a}, quanto vale ${r} α?`,...mk(F[r],sh(all).slice(0,3)),f:fig({lb:{op:a,ad:b,hy:c}}),e:`${r} α = ${{sen:'oposto ÷ hipotenusa',cos:'adjacente ÷ hipotenusa',tan:'oposto ÷ adjacente'}[r]} = ${F[r]}.`}}
+ else if(sk=='lado'&&R()<.35){const f=pick(['sen','cos','tan']),a=pick([30,45,60]);
+  q={t:`Se ${f} α = ${EX[f][a]}, qual é o ângulo agudo α?`,o:['30°','45°','60°','90°'],a:[30,45,60].indexOf(a),e:`Valor notável: ${f} ${a}° = ${EX[f][a]}.`}}
+ else{const prob=sk=='problema',a=pick([30,45,60]),H=pick([4,6,8,10,12]),f=prob?pick(['sen','cos']):pick(['sen','cos']),c=val(f,a,H),h=H/2,
+  w=sh([String(h),h+'√3',h+'√2',String(H),H+'√3'].filter(x=>x!=c)).slice(0,3),u=prob?' m':'',
+  tx=prob?(f=='sen'?`Uma escada de ${H} m forma ${a}° com o chão. Que altura da parede ela alcança?`:`Uma rampa de ${H} m forma ${a}° com o solo. Qual distância horizontal ela cobre?`):`Hipotenusa ${H} e ângulo de ${a}°. Qual a medida do cateto ${f=='sen'?'oposto':'adjacente'} a esse ângulo?`;
+  q={t:tx,...mk(c+u,w.map(x=>x+u)),e:`${f} ${a}° = ${EX[f][a]}. Então ${H} · ${EX[f][a]} = ${c}${u}.`}}
+ q.sk=sk;return q}
+const ARSK=['lados','razao','calculo','calculo','lado','problema','razao','lado'];
+
+/* ===== Cartão de pergunta (usado no solo e na Arena) ===== */
+function qCard(q,i,n,fn,pk,rv,extra=''){return `<div class="card q"><div class="qh"><span class="pill">${SK[q.sk]}</span><b>${i+1}/${n}</b></div>${extra}<h2>${q.t}</h2>${q.f?`<div class="fig">${q.f}</div>`:''}<div class="opts">${q.o.map((o,k)=>`<button class="opt ${rv?(k==q.a?'ok':k==pk?'no':'dim'):(k==pk?'sel':'')}" style="--d:${k*60}ms" ${pk!=null||rv?'disabled':''} onclick="${fn}(${k})"><i>${'ABCD'[k]}</i>${o}</button>`).join('')}</div>${rv?`<div class="exp ${pk==q.a?'g':'b'}"><b>${pk==q.a?'Isso aí! ':pk==null?'Tempo esgotado. ':'Quase! '}</b>${q.e}</div>`:''}</div>`}
+
+/* ===== Quiz solo / missões ===== */
+let Q=null;
+function startQuiz(qs,m){Q={qs,i:0,ok:0,m,pk:null};go('quiz')}
+function startM(i){startQuiz(Array.from({length:5},(_,j)=>genQ(rs(),j,M[i].sk[j%M[i].sk.length])),i)}
+function revanche(){const w=weak(),ks=w.length?w:Object.keys(SK),s=rs();startQuiz(Array.from({length:5},(_,j)=>genQ(s,j,ks[j%ks.length])),null)}
+function pk(k){if(Q.pk!=null)return;Q.pk=k;const q=Q.qs[Q.i],ok=k==q.a;if(ok)Q.ok++;rec(q.sk,ok);draw(false)}
+function nx(){Q.pk=null;Q.i++;if(Q.i>=Q.qs.length){if(Q.m!=null){const p=Math.round(Q.ok/Q.qs.length*100);P.dn[Q.m]=Math.max(P.dn[Q.m]||0,p);P.xp+=20;saveP()}view='res'}draw()}
+
+/* ===== Laboratório ===== */
+let labShow=false,labDeg=35;
+function setLab(d){d=+d;labDeg=d;const r=d*Math.PI/180,s=Math.sin(r),c=Math.cos(r),t=d>=90?null:Math.tan(r),adj=200*c,op=200*s,Bx=40+adj,Cy=200-op,set=(i,o)=>{const e=$('#'+i);if(e)for(const k in o)e.setAttribute(k,o[k])};
+ set('lp',{d:`M40 200L${Bx} 200L${Bx} ${Cy}Z`});set('lr',{d:`M${Bx-12} 200v-12h12`,opacity:d<6||d>84?0:1});
+ set('la',{d:`M74 200A34 34 0 0 0 ${40+34*c} ${200-34*s}`});
+ set('lh',{x:(40+Bx)/2-16*s,y:(200+Cy)/2-16*c});set('lo',{x:Bx+10,y:(200+Cy)/2+5,opacity:d<4?0:1});set('lc',{x:(40+Bx)/2,y:222});set('lt',{x:40+54*Math.cos(r/2),y:200-54*Math.sin(r/2)+5});
+ $('#ang').textContent=d+'°';$('#sl').value=d;
+ const vs=[s,c,t];['s','c','t'].forEach((k,i)=>{$('#v'+k).textContent=vs[i]==null?'indefinida':vs[i].toFixed(3);$('#b'+k).style.width=(vs[i]==null?100:Math.min(vs[i]/(k=='t'?3:1),1)*100)+'%'});
+ document.querySelectorAll('.chip[data-d]').forEach(e=>e.classList.toggle('on',+e.dataset.d==d));
+ const f=$('#fm');if(f){f.innerHTML=`<div>Imagine hipotenusa = 10 e α = ${d}°</div><div><b>sen</b> ${d}° = oposto ÷ hipotenusa = ${(10*s).toFixed(2)} ÷ 10 = <b>${s.toFixed(3)}</b></div><div><b>cos</b> ${d}° = adjacente ÷ hipotenusa = ${(10*c).toFixed(2)} ÷ 10 = <b>${c.toFixed(3)}</b></div><div><b>tan</b> ${d}° = oposto ÷ adjacente = ${t==null?'indefinida (adjacente = 0)':(10*s).toFixed(2)+' ÷ '+(10*c).toFixed(2)+' = <b>'+t.toFixed(3)+'</b>'}</div>`}}
+function togFm(){labShow=!labShow;$('#fm').style.display=labShow?'block':'none';$('#fb').textContent=labShow?'Ocultar a conta':'Mostrar a conta passo a passo';setLab(labDeg)}
+
+/* ===== Arena (multiplayer via Supabase) ===== */
+const T=20000;let A=null;
+const RQ=i=>genQ(A.room.seed,i,ARSK[i%ARSK.length]);
+function setNick(){const n=($('#nick').value||'').trim().slice(0,14);if(!n){toast('Digite um apelido para entrar');return false}me.nick=n;saveMe();return true}
+async function mkRoom(){if(!sb)return toast('Sem conexão com o servidor');if(!setNick())return;const code=Array.from({length:4},()=>'ABCDEFGHJKLMNPQRSTUVWXYZ'[Math.random()*24|0]).join('');
+ const r=await sb.from('rooms').insert({code,host_id:me.id,seed:rs(),total:8,state:'lobby',cur:0});if(r.error)return toast('Erro: rode o SQL no Supabase primeiro');
+ await sb.from('room_players').insert({room_code:code,player_id:me.id,nick:me.nick,avatar:me.av,score:0});enter(code)}
+async function joinRoom(){if(!sb)return toast('Sem conexão com o servidor');if(!setNick())return;const code=($('#code').value||'').toUpperCase().trim(),{data:r}=await sb.from('rooms').select().eq('code',code).maybeSingle();
+ if(!r)return toast('Sala não encontrada');if(r.state!='lobby'&&r.host_id!=me.id)return toast('Essa partida já começou');
+ await sb.from('room_players').upsert({room_code:code,player_id:me.id,nick:me.nick,avatar:me.av,score:0},{onConflict:'room_code,player_id'});enter(code)}
+function enter(code){A={code,room:null,pl:[],my:[],picked:null,t0:0,score:0,sig:''};view='arena';poll();A.iv=setInterval(poll,1800);
+ try{A.ch=sb.channel('r'+code).on('postgres_changes',{event:'*',schema:'public',table:'rooms',filter:'code=eq.'+code},poll).on('postgres_changes',{event:'*',schema:'public',table:'room_players',filter:'room_code=eq.'+code},poll).subscribe()}catch(e){}draw()}
+async function poll(){if(!A||A.busy)return;A.busy=1;try{const [r,p]=await Promise.all([sb.from('rooms').select().eq('code',A.code).single(),sb.from('room_players').select().eq('room_code',A.code).order('score',{ascending:false})]);if(!A)return;
+ if(!r.data){leave();toast('A sala foi encerrada');return}const o=A.room;A.room=r.data;A.pl=p.data||[];
+ if(!o||o.state!=A.room.state||o.cur!=A.room.cur){clearInterval(A.tv);if(A.room.state=='q'){A.picked=null;A.t0=Date.now();A.rv=0;A.tv=setInterval(tick,200)}}
+ const sig=A.room.state+A.room.cur+A.pl.map(x=>x.player_id+x.score).join();if(sig!=A.sig){A.sig=sig;if(view=='arena')draw(!o||o.state!=A.room.state||o.cur!=A.room.cur)}}catch(e){}if(A)A.busy=0}
+function tick(){if(!A||A.room.state!='q')return;const rem=T-(Date.now()-A.t0),b=$('#tb');if(b)b.style.width=Math.max(0,rem/T*100)+'%';if(rem<=0&&A.room.host_id==me.id&&!A.rv){A.rv=1;up({state:'reveal'})}}
+const up=o=>Promise.resolve(sb.from('rooms').update(o).eq('code',A.code)).then(poll);
+const isHost=()=>A.room&&A.room.host_id==me.id;
+function startG(){up({state:'q',cur:0})}function revealQ(){A.rv=1;up({state:'reveal'})}function nextQ(){const r=A.room;r.cur+1>=r.total?up({state:'done'}):up({state:'q',cur:r.cur+1})}
+async function aa(k){if(A.picked!=null||A.room.state!='q')return;const ms=Date.now()-A.t0;if(ms>T)return;const q=RQ(A.room.cur),ok=k==q.a,pts=ok?100+Math.round(50*(1-ms/T)):0;A.picked=k;A.score+=pts;A.my.push({sk:q.sk,ok});rec(q.sk,ok);draw(false);
+ await sb.from('answers').insert({room_code:A.code,player_id:me.id,q_index:A.room.cur,skill:q.sk,correct:ok,ms,points:pts});await sb.from('room_players').update({score:A.score}).eq('room_code',A.code).eq('player_id',me.id)}
+function leave(){if(A){clearInterval(A.iv);clearInterval(A.tv);try{sb.removeChannel(A.ch)}catch(e){}A=null}go('arena')}
+const board=n=>A.pl.slice(0,n||99).map((p,i)=>`<div class="rk ${p.player_id==me.id?'me':''}" style="animation-delay:${i*50}ms"><b>${i+1}</b><span>${esc(p.avatar||'🙂')}</span><span>${esc(p.nick)}</span><em>${p.score}</em></div>`).join('');
+function pickAv(a){me.av=a;saveMe();draw(false)}
+
+/* ===== Telas ===== */
+const V={
+home(){const nx=M.findIndex((m,i)=>(P.dn[i]||0)<60),t=Object.values(P.sk).reduce((a,s)=>({ok:a.ok+s.ok,n:a.n+s.n}),{ok:0,n:0});
+ return `<div class="card hero"><span class="pill">Entenda. Experimente. Desafie-se.</span><h1>Olá${me.nick?', '+esc(me.nick):''}! 👋</h1><p class="mu">Aprenda seno, cosseno e tangente mexendo em triângulos de verdade e jogando com seus colegas.</p><div class="row"><button class="btn" onclick="go('lab')">📐 Abrir laboratório</button><button class="btn ghost" onclick="go('arena')">⚔️ Entrar na Arena</button></div></div>
+ <div class="grid3"><div class="card stat"><b>${P.xp}</b>XP</div><div class="card stat"><b>${Object.keys(P.dn).filter(k=>P.dn[k]>=60).length}/5</b>missões</div><div class="card stat"><b>${t.n?Math.round(t.ok/t.n*100)+'%':'—'}</b>acertos</div></div>
+ <div class="card"><h3>Missão do dia</h3>${nx<0?'<p>Você concluiu todas as missões. Treine seus pontos fracos!</p><button class="btn" onclick="revanche()">Treino personalizado</button>':`<p><b>Missão ${nx+1}:</b> ${M[nx].n}</p><button class="btn" onclick="startM(${nx})">${M[nx].ic} Começar</button>`}</div>`},
+lab(){return `<h1>Laboratório</h1><p class="mu">Arraste o ângulo e veja os lados e as razões mudarem em tempo real.</p><div class="card lab"><svg viewBox="0 0 300 235" aria-label="Triângulo retângulo interativo"><path id="lp" fill="rgba(124,92,255,.22)" stroke="none"/><line id="l1" x1="40" y1="200" x2="40" y2="200"/><path id="lr" fill="none" stroke="#a9b0dc" stroke-width="2"/><path id="la" fill="none" stroke="#ff6bd6" stroke-width="3"/>
+ <g font-size="14" font-weight="700"><text id="lh" fill="#b49cff" text-anchor="middle">hipotenusa</text><text id="lo" fill="#22d3ee">oposto</text><text id="lc" fill="#ffc46b" text-anchor="middle">adjacente</text><text id="lt" fill="#ff6bd6" font-size="17">α</text></g></svg>
+ <div class="row" style="align-items:center;justify-content:space-between"><span class="mu">Ângulo</span><span class="ang" id="ang">35°</span></div>
+ <input class="sl" id="sl" type="range" min="0" max="90" value="35" oninput="setLab(this.value)" aria-label="Ângulo">
+ <div class="chips">${[0,30,45,60,90].map(d=>`<button class="chip" data-d="${d}" onclick="setLab(${d})">${d}°</button>`).join('')}</div>
+ <div class="vals"><div class="val"><small>Seno</small><b id="vs"></b><small>oposto / hip.</small><div class="bar"><i id="bs"></i></div></div><div class="val"><small>Cosseno</small><b id="vc"></b><small>adj. / hip.</small><div class="bar"><i id="bc"></i></div></div><div class="val"><small>Tangente</small><b id="vt"></b><small>oposto / adj.</small><div class="bar"><i id="bt"></i></div></div></div>
+ <button class="btn ghost" id="fb" onclick="togFm()">Mostrar a conta passo a passo</button><div class="fm" id="fm" style="display:none"></div>
+ <p class="mu" style="font-size:.85rem;margin-top:14px">Em 0° e 90° o triângulo deixa de existir; em 90° a tangente é indefinida.</p></div>`},
+trail(){return `<h1>Jornada</h1><p class="mu">Conclua cada missão com 60% ou mais para liberar a próxima.</p>`+M.map((m,i)=>{const lk=i>0&&(P.dn[i-1]||0)<60,b=P.dn[i];return `<button class="card mis ${lk?'lk':''}" ${lk?'disabled':''} onclick="startM(${i})"><span class="ic">${lk?'🔒':m.ic}</span><span><b>Missão ${i+1}</b><br>${m.n}</span><span class="pill">${b!=null?b+'%':lk?'bloqueada':'novo'}</span></button>`}).join('')},
+quiz(){const q=Q.qs[Q.i];return qCard(q,Q.i,Q.qs.length,'pk',Q.pk,Q.pk!=null)+(Q.pk!=null?`<button class="btn big" onclick="nx()">${Q.i+1<Q.qs.length?'Continuar':'Ver resultado'}</button>`:'')},
+res(){const n=Q.qs.length,p=Math.round(Q.ok/n*100),st=p>=80?3:p>=60?2:p>=30?1:0;return `<div class="card center"><div class="stars">${'⭐'.repeat(st)||'💪'}</div><h1>${p}%</h1><p>${Q.ok} de ${n} acertos${Q.m!=null?(p>=60?' — próxima missão liberada!':' — você precisa de 60% para avançar.'):''}</p><div class="row" style="justify-content:center"><button class="btn" onclick="${Q.m!=null?`startM(${Q.m})`:'revanche()'}">Tentar de novo</button><button class="btn ghost" onclick="go('trail')">Missões</button></div></div>`},
+arena(){if(!A)return `<h1>Arena</h1><p class="mu">Crie uma sala e compartilhe o código, ou entre na sala de um colega.</p>${sb?'':'<div class="card">⚠️ Não foi possível carregar o Supabase. Verifique sua conexão.</div>'}
+ <div class="card"><h3>Seu perfil</h3><input class="tx" id="nick" maxlength="14" placeholder="Apelido" value="${esc(me.nick)}" autocomplete="off"><div class="avs">${['🦊','🐼','🐙','🦄','🐸','🚀','⚡','🧠'].map(a=>`<button class="chip ${a==me.av?'on':''}" onclick="me.nick=$('#nick').value;pickAv('${a}')">${a}</button>`).join('')}</div></div>
+ <div class="card"><h3>Criar sala</h3><p class="mu">8 perguntas, 20 segundos cada. Precisão vale mais que velocidade.</p><button class="btn" onclick="mkRoom()">➕ Criar sala</button></div>
+ <div class="card"><h3>Entrar com código</h3><input class="tx" id="code" maxlength="4" placeholder="CÓDIGO" style="text-transform:uppercase;letter-spacing:.3em;text-align:center" autocapitalize="characters" autocomplete="off"><button class="btn" onclick="joinRoom()">Entrar</button></div>`;
+ const r=A.room;if(!r)return '<div class="card center"><h2>Conectando…</h2></div>';
+ if(r.state=='lobby')return `<div class="card center"><p class="mu">Código da sala</p><div class="code">${A.code}</div><p class="mu">${A.pl.length} jogador(es) conectado(s)</p></div><div class="card"><h3>Jogadores</h3>${board()}</div>${isHost()?`<button class="btn big" onclick="startG()">▶ Começar partida</button>`:'<p class="center mu">Aguardando o anfitrião iniciar…</p>'}<button class="btn ghost big" onclick="leave()">Sair</button>`;
+ if(r.state=='q'||r.state=='reveal'){const q=RQ(r.cur),rv=r.state=='reveal';return `<div class="tm"><i id="tb" style="width:${rv?0:100}%"></i></div>${qCard(q,r.cur,r.total,'aa',A.picked,rv,`<p class="mu">Sala ${A.code} · ${A.score} pts</p>`)}${rv?`<div class="card"><h3>Placar</h3>${board(5)}</div>`:A.picked!=null?'<p class="center mu">✓ Resposta enviada. Aguardando os outros…</p>':''}${isHost()?`<button class="btn big" onclick="${rv?'nextQ()':'revealQ()'}">${rv?(r.cur+1>=r.total?'Ver resultado final':'Próxima pergunta'):'Revelar agora'}</button>`:''}`}
+ const by={};A.my.forEach(a=>{(by[a.sk]=by[a.sk]||{ok:0,n:0}).n++;if(a.ok)by[a.sk].ok++});
+ return `<div class="card center"><div class="stars">🏆</div><h1>Resultado final</h1></div><div class="card">${board()}</div><div class="card"><h3>Sua análise</h3>${Object.keys(by).map(k=>`<div class="sk"><span>${SK[k]}</span><em>${by[k].ok}/${by[k].n}</em><div class="bar"><i style="width:${by[k].ok/by[k].n*100}%"></i></div></div>`).join('')||'<p class="mu">Sem respostas registradas.</p>'}</div><button class="btn big" onclick="leave();revanche()">🔁 Revanche personalizada</button><button class="btn ghost big" onclick="leave()">Sair da sala</button>`},
+prog(){const ks=Object.keys(SK),w=weak(),t=Object.values(P.sk).reduce((a,s)=>({ok:a.ok+s.ok,n:a.n+s.n}),{ok:0,n:0});
+ return `<h1>Meu progresso</h1><div class="grid3"><div class="card stat"><b>${P.xp}</b>XP</div><div class="card stat"><b>${t.n}</b>respostas</div><div class="card stat"><b>${t.n?Math.round(t.ok/t.n*100)+'%':'—'}</b>acertos</div></div>
+ <div class="card"><h3>Domínio por assunto</h3>${ks.map(k=>{const a=acc(k),n=(P.sk[k]||{}).n||0;return `<div class="sk"><span>${SK[k]}</span><em>${a==null?'sem dados':Math.round(a*100)+'% · '+n+' resp.'}</em><div class="bar"><i style="width:${a==null?0:a*100}%"></i></div></div>`}).join('')}</div>
+ <div class="card"><h3>Revisão recomendada</h3>${w.length?`<p>Reforce: <b>${w.map(k=>SK[k]).join(', ')}</b>.</p><div class="row"><button class="btn" onclick="revanche()">Treino personalizado</button><button class="btn ghost" onclick="go('lab')">Rever no laboratório</button></div>`:'<p>Nenhuma dificuldade detectada ainda. Continue praticando!</p>'}</div>
+ <button class="btn ghost" onclick="if(confirm('Zerar todo o progresso deste aparelho?')){P={xp:0,sk:{},dn:{}};saveP();draw()}">Zerar progresso</button>`}};
+
+/* ===== Navegação e renderização ===== */
+const NAV=[['home','🏠','Início'],['lab','📐','Laboratório'],['trail','🗺️','Missões'],['arena','⚔️','Arena'],['prog','📈','Progresso']];
+let view='home';
+function draw(a=true){const v=$('#v');v.innerHTML=V[view]();v.classList.remove('in');if(a){void v.offsetWidth;v.classList.add('in')}
+ const on={quiz:'trail',res:'trail'}[view]||view;document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.v==on));
+ if(view=='lab')setLab(labDeg);if(view=='arena'&&A&&A.room&&A.room.state=='q')tick()}
+function go(v){if(A&&v!='arena'&&v!='quiz')leave_();view=v;draw();scrollTo({top:0,behavior:'smooth'})}
+function leave_(){clearInterval(A.iv);clearInterval(A.tv);try{sb.removeChannel(A.ch)}catch(e){}A=null}
+function leave(){if(A)leave_();view='arena';draw()}
+$('#nav').innerHTML='<div class="brand">TriGo</div>'+NAV.map(n=>`<button data-v="${n[0]}" onclick="go('${n[0]}')"><span>${n[1]}</span>${n[2]}</button>`).join('');
+draw();
+</script>
+</body>
+</html>
